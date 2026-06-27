@@ -46,6 +46,7 @@ export {
   repeatedBitLength,
 } from "./watermark/payload.js";
 export { countBlocks, blocksPerRow, selectBlockOrder } from "./watermark/coefficients.js";
+export type { CapacityEstimate, CapacityParams } from "./watermark/capacity.js";
 
 // Utilities.
 export { crc32 } from "./utils/crc32.js";

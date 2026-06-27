@@ -13,5 +13,6 @@ export {
   recoveryCount,
 } from "./metrics/recovery.js";
 export { messageByteLength } from "./watermark/payload.js";
+export { estimateCapacity } from "./watermark/capacity.js";
 export { createPixelImage } from "./image/pixel-image.js";
 export { clonePixelImage } from "./image/clone.js";

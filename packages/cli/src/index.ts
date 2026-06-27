@@ -4,6 +4,7 @@ import { cac } from "cac";
 import { embedCommand } from "./commands/embed.js";
 import { extractCommand } from "./commands/extract.js";
 import { auditCommand } from "./commands/audit.js";
+import { capacityCommand } from "./commands/capacity.js";
 import { versionCommand } from "./commands/version.js";
 import { CLI_VERSION, failure } from "./utils/output.js";
 import { CliError, errorMessage } from "./utils/errors.js";
@@ -94,6 +95,19 @@ export function buildCli() {
         out: typeof options.out === "string" ? options.out : undefined,
         saveProtected:
           typeof options.saveProtected === "string" ? options.saveProtected : undefined,
+      });
+    });
+
+  cli
+    .command("capacity <input>", "Report whether a message fits in an image")
+    .option("--message <message>", "Message you intend to embed (UTF-8)")
+    .option("--repetitions <repetitions>", "Repetition coding count (default 5)")
+    .example('  oas capacity input.png --message "artist=demo" --repetitions 5')
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await capacityCommand({
+        input,
+        message: requiredString(options.message, "--message"),
+        repetitions: optionalInt(options.repetitions, "--repetitions"),
       });
     });
 

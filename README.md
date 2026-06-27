@@ -128,6 +128,30 @@ oas audit input.png \
   --out report.json
 ```
 
+### Estimate capacity
+
+The watermark stores one bit per 8x8 block, so capacity is `blocks / repetitions`.
+Check whether a message fits before embedding:
+
+```bash
+oas capacity input.png \
+  --message "artist=demo;license=no-ai-training" \
+  --repetitions 5
+```
+
+```txt
+Image: 384x384
+Blocks: 2304
+Message bytes: 34
+Checksum bytes: 4
+Payload bits: 304
+Repetitions: 5
+Required blocks: 1520
+Available blocks: 2304
+Capacity: OK
+Max message bytes (at 5x repetitions): 53
+```
+
 ### Print the version
 
 ```bash
