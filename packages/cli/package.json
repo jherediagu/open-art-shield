@@ -1,0 +1,33 @@
+{
+  "name": "@openartshield/cli",
+  "version": "0.1.0",
+  "description": "Command-line interface for OpenArtShield: embed, extract, and audit invisible image watermarks.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "oas": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openartshield/core": "workspace:*",
+    "@openartshield/node": "workspace:*",
+    "cac": "^6.7.14"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

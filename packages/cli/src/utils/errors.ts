@@ -1,0 +1,15 @@
+// Error carrying an exit code, so command handlers can fail with the right one.
+export class CliError extends Error {
+  readonly exitCode: number;
+
+  constructor(message: string, exitCode = 1) {
+    super(message);
+    this.name = "CliError";
+    this.exitCode = exitCode;
+  }
+}
+
+export function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
