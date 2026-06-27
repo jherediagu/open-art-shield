@@ -4,6 +4,7 @@ export { embedWatermark } from "./watermark/embed.js";
 export { extractWatermark } from "./watermark/extract.js";
 export { runAudit } from "./audit/runner.js";
 export { serializeReport, buildSummary } from "./audit/report.js";
+export { renderHtmlReport } from "./audit/html.js";
 export { psnr, ssim } from "./metrics/quality.js";
 export {
   bitAccuracy,
