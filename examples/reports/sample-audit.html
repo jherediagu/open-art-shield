@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenArtShield audit report</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem auto; max-width: 900px; padding: 0 1rem; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .sub { color: #777; margin-top: 0; }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem 1.5rem; margin: 1.25rem 0; }
+  .meta div { font-size: 0.9rem; }
+  .meta b { display: block; color: #777; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  th, td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #8883; text-align: left; }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: #777; }
+  td.center, th.center { text-align: center; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.ok td:nth-child(2) { color: #2e7d32; font-weight: 600; }
+  tr.fail td:nth-child(2) { color: #c62828; font-weight: 600; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
+  .note { margin-top: 1.5rem; padding: 0.75rem 1rem; border-left: 3px solid #f0ad4e; background: #f0ad4e1a; font-size: 0.88rem; }
+  footer { margin-top: 2rem; color: #888; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+  <h1>OpenArtShield audit report</h1>
+  <p class="sub">Report schema v0.1.0</p>
+
+  <div class="meta">
+    <div><b>Image</b>examples/images/sample-original.png &middot; 512&times;512, 3 ch</div>
+    <div><b>Message</b><code>artist=demo;license=no-ai-training</code></div>
+    <div><b>Seed</b>123</div>
+    <div><b>Strength</b>8</div>
+    <div><b>Repetitions</b>5</div>
+    <div><b>Recovered</b>8 / 14 (57%)</div>
+    <div><b>Avg bit accuracy</b>95.4%</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Transform</th>
+        <th class="center">Recovered</th>
+        <th class="center">Checksum</th>
+        <th class="num">Bit acc.</th>
+        <th class="num">PSNR (dB)</th>
+        <th class="num">SSIM</th>
+        <th>Recovered message</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="ok">
+        <td><code>identity</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">&mdash;</td>
+        <td class="num">1.0000</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="ok">
+        <td><code>jpeg_quality_95</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">41.57</td>
+        <td class="num">0.9735</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="ok">
+        <td><code>jpeg_quality_85</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">34.78</td>
+        <td class="num">0.8529</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="fail">
+        <td><code>jpeg_quality_70</code></td>
+        <td class="center">no</td>
+        <td class="center">no</td>
+        <td class="num">98.0%</td>
+        <td class="num">33.14</td>
+        <td class="num">0.7602</td>
+        <td>(none)</td>
+      </tr>
+      <tr class="fail">
+        <td><code>resize_75</code></td>
+        <td class="center">no</td>
+        <td class="center">no</td>
+        <td class="num">98.4%</td>
+        <td class="num">32.75</td>
+        <td class="num">0.7277</td>
+        <td>(none)</td>
+      </tr>
+      <tr class="fail">
+        <td><code>resize_50</code></td>
+        <td class="center">no</td>
+        <td class="center">no</td>
+        <td class="num">96.7%</td>
+        <td class="num">32.43</td>
+        <td class="num">0.6879</td>
+        <td>(none)</td>
+      </tr>
+      <tr class="fail">
+        <td><code>center_crop_90</code></td>
+        <td class="center">no</td>
+        <td class="center">no</td>
+        <td class="num">50.7%</td>
+        <td class="num">23.42</td>
+        <td class="num">0.4634</td>
+        <td>(none)</td>
+      </tr>
+      <tr class="ok">
+        <td><code>gaussian_blur_0_75</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">34.56</td>
+        <td class="num">0.8026</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="fail">
+        <td><code>gaussian_blur_1_25</code></td>
+        <td class="center">no</td>
+        <td class="center">no</td>
+        <td class="num">99.3%</td>
+        <td class="num">31.86</td>
+        <td class="num">0.6744</td>
+        <td>(none)</td>
+      </tr>
+      <tr class="ok">
+        <td><code>brightness_0_9</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">23.43</td>
+        <td class="num">0.9885</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="ok">
+        <td><code>brightness_1_1</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">23.31</td>
+        <td class="num">0.9901</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="ok">
+        <td><code>contrast_0_9</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">35.07</td>
+        <td class="num">0.9963</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="ok">
+        <td><code>contrast_1_1</code></td>
+        <td class="center">yes</td>
+        <td class="center">yes</td>
+        <td class="num">100.0%</td>
+        <td class="num">35.86</td>
+        <td class="num">0.9968</td>
+        <td>artist=demo;license=no-ai-training</td>
+      </tr>
+      <tr class="fail">
+        <td><code>screenshot_simulation</code></td>
+        <td class="center">no</td>
+        <td class="center">no</td>
+        <td class="num">92.1%</td>
+        <td class="num">32.13</td>
+        <td class="num">0.6933</td>
+        <td>(none)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="note">
+    A "recovered" row means the embedded signal survived that specific transform
+    at these parameters. It does <strong>not</strong> mean the image is protected
+    from AI training, copying, or editing. Treat every result as experimental.
+  </p>
+
+  <footer>Generated by OpenArtShield &middot; <code>oas audit</code></footer>
+</body>
+</html>
