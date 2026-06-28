@@ -180,6 +180,113 @@ describe("oas ai-audit", () => {
   });
 });
 
+describe("oas protect", () => {
+  it("embeds, audits, and writes report + sidecar with default paths", async () => {
+    await mkdir(join(dir, "out"), { recursive: true });
+    const out = join(dir, "out", "protected.png");
+
+    const r = await runProtect({
+      input: inputPath,
+      message,
+      seed: 123,
+      strength: 16,
+      repetitions: 5,
+      out,
+      now: "2026-06-28T00:00:00.000Z",
+    });
+
+    expect(r.outPath).toBe(out);
+    expect(r.jsonPath).toBe(join(dir, "out", "protected.audit.json"));
+    expect(r.sidecarPath).toBe(join(dir, "out", "protected.openartshield.json"));
+    expect(await exists(out)).toBe(true);
+    expect(await exists(r.jsonPath)).toBe(true);
+    expect(await exists(r.sidecarPath!)).toBe(true);
+
+    // Sidecar must NOT contain the message by default.
+    const sidecar = JSON.parse(await readFile(r.sidecarPath!, "utf-8"));
+    expect(sidecar.message).toBeUndefined();
+    expect(sidecar.messageLength).toBe(messageByteLength(message));
+    expect(sidecar.seed).toBe(123);
+    expect(sidecar.createdAt).toBe("2026-06-28T00:00:00.000Z");
+
+    // Report is real and has the identity baseline recovered.
+    expect(r.report.summary.totalTransforms).toBeGreaterThan(1);
+    const identity = r.report.results.find((x) => x.transform === "identity");
+    expect(identity?.messageRecovered).toBe(true);
+  });
+
+  it("writes an HTML report when requested and stores the message on opt-in", async () => {
+    const out = join(dir, "protected2.png");
+    const html = join(dir, "protected2.audit.html");
+    const r = await runProtect({
+      input: inputPath,
+      message,
+      seed: 7,
+      repetitions: 5,
+      out,
+      html,
+      storeMessage: true,
+      now: "2026-06-28T00:00:00.000Z",
+    });
+    expect(r.htmlPath).toBe(html);
+    expect((await readFile(html, "utf-8")).startsWith("<!doctype html>")).toBe(true);
+    const sidecar = JSON.parse(await readFile(r.sidecarPath!, "utf-8"));
+    expect(sidecar.message).toBe(message);
+  });
+
+  it("can skip the sidecar", async () => {
+    const out = join(dir, "protected3.png");
+    const r = await runProtect({
+      input: inputPath,
+      message,
+      seed: 1,
+      repetitions: 5,
+      out,
+      noSidecar: true,
+    });
+    expect(r.sidecarPath).toBeUndefined();
+  });
+
+  it("fails before embedding when the message does not fit", async () => {
+    const smallPath = join(dir, "small.png");
+    await writeImage(createSyntheticImage(64, 64, 3), smallPath);
+    const out = join(dir, "small-protected.png");
+
+    await expect(
+      runProtect({ input: smallPath, message, seed: 1, repetitions: 5, out }),
+    ).rejects.toThrow(/does not fit/i);
+
+    // No protected image should have been written.
+    expect(await exists(out)).toBe(false);
+  });
+});
+
+describe("oas verify", () => {
+  it("recovers the message via the sidecar produced by protect", async () => {
+    const out = join(dir, "verify-me.png");
+    const r = await runProtect({
+      input: inputPath,
+      message,
+      seed: 123,
+      repetitions: 5,
+      out,
+      now: "2026-06-28T00:00:00.000Z",
+    });
+
+    const v = await runVerify({ input: out, sidecar: r.sidecarPath });
+    expect(v.checksumValid).toBe(true);
+    expect(v.recoveredMessage).toBe(message);
+    expect(v.sidecar.algorithm).toBe("dct-basic");
+  });
+
+  it("defaults the sidecar path from the image path", async () => {
+    const out = join(dir, "verify-default.png");
+    await runProtect({ input: inputPath, message, seed: 5, repetitions: 5, out });
+    const v = await runVerify({ input: out }); // no --sidecar
+    expect(v.recoveredMessage).toBe(message);
+  });
+});
+
 describe("oas version", () => {
   it("returns the package version", () => {
     expect(getVersion()).toBe("0.1.0");
