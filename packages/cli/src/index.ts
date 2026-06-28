@@ -105,7 +105,8 @@ export function buildCli() {
 
   cli
     .command("ai-audit <original> <candidate>", "Measure embedding drift between two images")
-    .option("--backend <id>", 'Embedding backend (only "mock" in this release)')
+    .option("--backend <id>", 'Embedding backend: "mock" (default) or "clip"')
+    .option("--model <id>", "Model id for the clip backend (default Xenova/clip-vit-base-patch32)")
     .option("--prompt <text>", "Optional prompt for image<->text drift")
     .option("--out <path>", "Path to write the JSON report")
     .option("--html <path>", "Also write a standalone HTML report")
@@ -115,6 +116,7 @@ export function buildCli() {
         original,
         candidate,
         backend: typeof options.backend === "string" ? options.backend : undefined,
+        model: typeof options.model === "string" ? options.model : undefined,
         prompt: typeof options.prompt === "string" ? options.prompt : undefined,
         out: typeof options.out === "string" ? options.out : undefined,
         html: typeof options.html === "string" ? options.html : undefined,

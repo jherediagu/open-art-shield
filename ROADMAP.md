@@ -96,7 +96,7 @@ Goal: evaluate provenance as a complementary signal, not as a replacement for wa
 Planned improvements:
 
 - Add an AI-perception (embedding drift) audit pipeline. _(done - `oas ai-audit`, deterministic mock backend)_
-- Add a real CLIP/OpenCLIP backend via `transformers.js` behind the `EmbeddingBackend` interface. _(next)_
+- Add a real CLIP/OpenCLIP backend via `transformers.js` behind the `EmbeddingBackend` interface. _(done, experimental - `oas ai-audit --backend clip`, optional dependency)_
 - Measure image-text similarity changes after transformations. _(partial - prompt drift, mock backend)_
 - Compare semantic drift between original, protected, and transformed images. _(done for the mock backend)_
 - Add configurable embedding backends. _(interface in place)_
