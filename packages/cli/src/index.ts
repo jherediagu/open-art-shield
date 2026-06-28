@@ -122,6 +122,48 @@ export function buildCli() {
     });
 
   cli
+    .command("protect <input>", "One-shot: capacity check, embed, audit, reports, sidecar")
+    .option("--message <message>", "Message to embed (UTF-8)")
+    .option("--seed <seed>", "Deterministic seed for block selection")
+    .option("--strength <strength>", "Embedding strength (default 8)")
+    .option("--repetitions <repetitions>", "Repetition coding count (default 5)")
+    .option("--out <out>", "Output path for the protected image")
+    .option("--json <path>", "JSON report path (default <out-basename>.audit.json)")
+    .option("--html <path>", "Also write an HTML report")
+    .option("--sidecar <path>", "Sidecar path (default <out-basename>.openartshield.json)")
+    .option("--skip-sidecar", "Do not write a sidecar file")
+    .option("--store-message", "Store the message inside the sidecar (off by default)")
+    .example(
+      '  oas protect input.png --message "artist=demo" --seed 123 --out protected.png --html report.html',
+    )
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await protectCommand({
+        input,
+        message: requiredString(options.message, "--message"),
+        seed: requiredInt(options.seed, "--seed"),
+        out: requiredString(options.out, "--out"),
+        strength: optionalInt(options.strength, "--strength"),
+        repetitions: optionalInt(options.repetitions, "--repetitions"),
+        json: typeof options.json === "string" ? options.json : undefined,
+        html: typeof options.html === "string" ? options.html : undefined,
+        sidecar: typeof options.sidecar === "string" ? options.sidecar : undefined,
+        noSidecar: options.skipSidecar === true,
+        storeMessage: options.storeMessage === true,
+      });
+    });
+
+  cli
+    .command("verify <input>", "Verify a watermark using its sidecar metadata")
+    .option("--sidecar <path>", "Sidecar path (default <input-basename>.openartshield.json)")
+    .example("  oas verify protected.png --sidecar protected.openartshield.json")
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await verifyCommand({
+        input,
+        sidecar: typeof options.sidecar === "string" ? options.sidecar : undefined,
+      });
+    });
+
+  cli
     .command("capacity <input>", "Report whether a message fits in an image")
     .option("--message <message>", "Message you intend to embed (UTF-8)")
     .option("--repetitions <repetitions>", "Repetition coding count (default 5)")
