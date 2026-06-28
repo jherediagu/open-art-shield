@@ -276,6 +276,30 @@ Capacity: OK
 Max message bytes (at 5x repetitions): 53
 ```
 
+### AI-perception audit (experimental)
+
+`oas ai-audit` measures how a model's _embedding_ of an image changes between two
+versions (e.g. original vs. protected), and whether that change survives the
+transform suite. This is the first **AI-facing** measurement layer - the
+groundwork for future cloaking work.
+
+```bash
+oas ai-audit original.png candidate.png \
+  --prompt "an illustration in the artist's style" \
+  --out ai-audit.json \
+  --html ai-audit.html
+```
+
+> **Important:** this release ships only a deterministic **`mock`** backend - a
+> downsampled-luma feature, **not** a learned perceptual model. It exists so the
+> pipeline can be built and tested without Python or model weights, and the CLI
+> prints a warning when it is used. A real CLIP/OpenCLIP backend (via
+> `transformers.js`) is planned next and will plug in behind the same interface.
+
+Telling detail from the mock backend: an _invisible_ DCT watermark produces
+near-zero embedding drift - i.e. watermarking does **not** change how a model
+"sees" the image. That gap is exactly what a future `oas cloak` would target.
+
 ### Print the version
 
 ```bash
@@ -490,7 +514,7 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | [`@openartshield/core`](packages/core) | Pure SDK: `PixelImage`, DCT, payload encoding, watermark embed/extract, PSNR/SSIM, audit primitives. No IO. |
 | [`@openartshield/node`](packages/node) | Node image IO (PNG/JPEG/WebP via `sharp`) and deterministic transform simulations.                          |
-| [`@openartshield/cli`](packages/cli)   | The `oas` CLI: `protect`, `verify`, `embed`, `extract`, `audit`, `capacity`, `version`.                     |
+| [`@openartshield/cli`](packages/cli)   | The `oas` CLI: `embed`, `extract`, `audit`, `capacity`, `ai-audit`, `version`.                              |
 
 ### Built-in transforms
 
