@@ -7,6 +7,7 @@ import { writeImage } from "@openartshield/node";
 import { runEmbed } from "../src/commands/embed.js";
 import { runExtract } from "../src/commands/extract.js";
 import { runAuditCommand } from "../src/commands/audit.js";
+import { runCapacity } from "../src/commands/capacity.js";
 import { getVersion, versionCommand } from "../src/commands/version.js";
 import { CLI_VERSION } from "../src/utils/output.js";
 import { createSyntheticImage } from "./helpers.js";
@@ -107,6 +108,21 @@ describe("oas audit", () => {
     expect(html.startsWith("<!doctype html>")).toBe(true);
     expect(html).toContain(message);
     expect(html).toContain("identity");
+  });
+});
+
+describe("oas capacity", () => {
+  it("reports capacity for the input image", async () => {
+    const c = await runCapacity({ input: inputPath, message, repetitions: 5 });
+    expect(c.width).toBe(384);
+    expect(c.height).toBe(384);
+    expect(c.availableBlocks).toBe(2304);
+    expect(c.messageBytes).toBe(messageByteLength(message));
+    expect(c.fits).toBe(true);
+  });
+
+  it("rejects an empty message", async () => {
+    await expect(runCapacity({ input: inputPath, message: "" })).rejects.toThrow();
   });
 });
 
