@@ -1,18 +1,12 @@
 import { writeFile } from "node:fs/promises";
 import {
-  createMockEmbeddingBackend,
   renderEmbeddingHtmlReport,
   runEmbeddingAudit,
   serializeEmbeddingReport,
   type EmbeddingAuditReport,
-  type EmbeddingBackend,
 } from "@openartshield/core";
-import {
-  createTransformersEmbeddingBackend,
-  defaultTransforms,
-  readImage,
-} from "@openartshield/node";
-import { CliError } from "../utils/errors.js";
+import { defaultTransforms, readImage } from "@openartshield/node";
+import { resolveEmbeddingBackend } from "../utils/backend.js";
 import { failure, info, raw, success } from "../utils/output.js";
 
 export type AiAuditOptions = {
@@ -26,19 +20,8 @@ export type AiAuditOptions = {
   html?: string;
 };
 
-// "mock" (default) is a deterministic placeholder; "clip"/"transformers" is the
-// real CLIP backend via transformers.js (optional dep, downloads weights on first run).
-function resolveBackend(id: string | undefined, model: string | undefined): EmbeddingBackend {
-  const backendId = id ?? "mock";
-  if (backendId === "mock") return createMockEmbeddingBackend();
-  if (backendId === "clip" || backendId === "transformers") {
-    return createTransformersEmbeddingBackend(model !== undefined ? { model } : {});
-  }
-  throw new CliError(`Unknown backend "${backendId}". Use "mock" (default) or "clip".`);
-}
-
 export async function runAiAudit(options: AiAuditOptions): Promise<EmbeddingAuditReport> {
-  const backend = resolveBackend(options.backend, options.model);
+  const backend = resolveEmbeddingBackend(options.backend, options.model);
   const original = await readImage(options.original);
   const candidate = await readImage(options.candidate);
 

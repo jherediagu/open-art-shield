@@ -71,3 +71,15 @@ export type {
   EmbeddingAuditReport,
   TransformDriftResult,
 } from "./ai/types.js";
+
+// Experimental embedding cloak (runCloak etc. are on the SDK surface above).
+export {
+  CLOAK_REPORT_VERSION,
+  CLOAK_LIMITATIONS,
+  DEFAULT_CLOAK_STRENGTH,
+  DEFAULT_CLOAK_STEPS,
+  DEFAULT_CLOAK_SEED,
+  DEFAULT_CLOAK_MIN_PSNR,
+  DEFAULT_CLOAK_MAX_SSIM_DROP,
+} from "./cloak/types.js";
+export type { CloakConfig, CloakReport, CloakResult } from "./cloak/types.js";
