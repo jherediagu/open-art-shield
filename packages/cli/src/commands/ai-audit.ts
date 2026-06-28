@@ -7,7 +7,11 @@ import {
   type EmbeddingAuditReport,
   type EmbeddingBackend,
 } from "@openartshield/core";
-import { defaultTransforms, readImage } from "@openartshield/node";
+import {
+  createTransformersEmbeddingBackend,
+  defaultTransforms,
+  readImage,
+} from "@openartshield/node";
 import { CliError } from "../utils/errors.js";
 import { failure, info, raw, success } from "../utils/output.js";
 
@@ -15,24 +19,26 @@ export type AiAuditOptions = {
   original: string;
   candidate: string;
   backend?: string;
+  /** Model id for the transformers backend (default Xenova/clip-vit-base-patch32). */
+  model?: string;
   prompt?: string;
   out?: string;
   html?: string;
 };
 
-// Only the mock backend exists in this release. A real transformers.js backend
-// is planned (PR2) and will register here behind the same EmbeddingBackend interface.
-function resolveBackend(id: string | undefined): EmbeddingBackend {
+// "mock" (default) is a deterministic placeholder; "clip"/"transformers" is the
+// real CLIP backend via transformers.js (optional dep, downloads weights on first run).
+function resolveBackend(id: string | undefined, model: string | undefined): EmbeddingBackend {
   const backendId = id ?? "mock";
   if (backendId === "mock") return createMockEmbeddingBackend();
-  throw new CliError(
-    `Unknown backend "${backendId}". Only "mock" is available in this release; a ` +
-      `real CLIP backend (transformers) is planned.`,
-  );
+  if (backendId === "clip" || backendId === "transformers") {
+    return createTransformersEmbeddingBackend(model !== undefined ? { model } : {});
+  }
+  throw new CliError(`Unknown backend "${backendId}". Use "mock" (default) or "clip".`);
 }
 
 export async function runAiAudit(options: AiAuditOptions): Promise<EmbeddingAuditReport> {
-  const backend = resolveBackend(options.backend);
+  const backend = resolveBackend(options.backend, options.model);
   const original = await readImage(options.original);
   const candidate = await readImage(options.candidate);
 

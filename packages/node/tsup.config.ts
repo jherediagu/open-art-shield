@@ -7,5 +7,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   target: "es2022",
-  external: ["sharp", "@openartshield/core"],
+  external: ["sharp", "@openartshield/core", "@huggingface/transformers"],
 });

@@ -290,15 +290,37 @@ oas ai-audit original.png candidate.png \
   --html ai-audit.html
 ```
 
-> **Important:** this release ships only a deterministic **`mock`** backend - a
-> downsampled-luma feature, **not** a learned perceptual model. It exists so the
-> pipeline can be built and tested without Python or model weights, and the CLI
-> prints a warning when it is used. A real CLIP/OpenCLIP backend (via
-> `transformers.js`) is planned next and will plug in behind the same interface.
+There are two backends:
 
-Telling detail from the mock backend: an _invisible_ DCT watermark produces
-near-zero embedding drift - i.e. watermarking does **not** change how a model
-"sees" the image. That gap is exactly what a future `oas cloak` would target.
+- **`mock`** (default) - a deterministic downsampled-luma feature, **not** a
+  learned perceptual model. It exists so the pipeline can be built and tested
+  without Python or model weights, and the CLI prints a warning when it is used.
+- **`clip`** (experimental) - a real CLIP backend via
+  [`transformers.js`](https://huggingface.co/docs/transformers.js) (ONNX, no
+  Python). It is an **optional dependency** that is not installed by default:
+
+  ```bash
+  pnpm add @huggingface/transformers
+  oas ai-audit original.png candidate.png --backend clip \
+    --model Xenova/clip-vit-base-patch32 \
+    --out ai-audit.json
+  ```
+
+  The first run downloads model weights from the Hugging Face hub and caches them
+  locally - nothing is bundled or committed. If the dependency is missing, the
+  command fails with a clear message. CI and the test suite always use the `mock`
+  backend; the `clip` backend was verified to run locally but is experimental.
+
+> **Caveats.** The `mock` backend does not represent how real AI systems see
+> images. CLIP is only one proxy for image-text embedding behavior; it does not
+> represent all diffusion models or training pipelines. Embedding drift is a
+> measurement, not protection.
+
+Telling detail: an _invisible_ DCT watermark produces near-zero embedding drift -
+i.e. watermarking does **not** change how a model "sees" the image. That gap is
+exactly what a future `oas cloak` would target. (With the real `clip` backend, a
+clearly different image drifts ~0.14 in our quick local check, while an image
+against itself drifts 0 - sanity confirmed.)
 
 ### Print the version
 

@@ -41,3 +41,9 @@ export {
 
 // Audit.
 export { auditProtectedImage, embedAndAudit } from "./audit/node-audit-runner.js";
+
+// Experimental real embedding backend (CLIP via transformers.js, optional dep).
+export {
+  createTransformersEmbeddingBackend,
+  type TransformersBackendOptions,
+} from "./ai/transformers-backend.js";
