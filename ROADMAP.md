@@ -41,7 +41,8 @@ Planned improvements:
 - Include original image, protected image, and generated audit report. _(done)_
 - Add `examples/README.md` with reproduction steps. _(done)_
 - Add a static HTML report generator. _(done - `oas audit --html`)_
-- Add a capacity estimation command such as `oas capacity`.
+- Add a capacity estimation command such as `oas capacity`. _(done)_
+- Add a one-shot `oas protect` workflow with sidecar metadata and `oas verify`. _(done)_
 - Add visual report tables and per-transform summaries.
 - Add image quality comparison summaries.
 

@@ -151,6 +151,70 @@ npm install -g @openartshield/cli
 
 The CLI binary is `oas`.
 
+### Protect (recommended one-shot workflow)
+
+`oas protect` is the high-level command: it checks capacity, embeds the watermark,
+runs the audit, writes a JSON report, and writes a sidecar with the extraction
+parameters - all in one step. It fails early (before writing anything) if the
+message does not fit.
+
+```bash
+oas protect input.png \
+  --message "artist=demo;license=no-ai-training" \
+  --seed 123 \
+  --strength 8 \
+  --repetitions 5 \
+  --out protected.png \
+  --html report.html
+```
+
+```txt
+OpenArtShield protect
+
+Input: input.png
+Output: protected.png
+Message bytes: 34
+Capacity: OK
+Transforms tested: 14
+Successful recoveries: 8
+Failed recoveries: 6
+
+JSON report: protected.audit.json
+HTML report: report.html
+Sidecar: protected.openartshield.json
+```
+
+By default it writes `protected.audit.json` (the report) and
+`protected.openartshield.json` (the sidecar) next to the output image. Use
+`--json`/`--sidecar` to override the paths, `--html` to also emit an HTML report,
+`--skip-sidecar` to omit it, and `--store-message` to include the message in the
+sidecar (off by default).
+
+> The sidecar file stores the extraction parameters required to verify the
+> watermark later (seed, message length, repetitions, strength). It does **not**
+> store the original message by default.
+
+### Verify
+
+`oas verify` reads the sidecar and uses its parameters to extract and check the
+watermark, so you don't have to remember the seed/length/repetitions by hand.
+
+```bash
+oas verify protected.png \
+  --sidecar protected.openartshield.json
+```
+
+```txt
+OpenArtShield verify
+
+Image: protected.png
+Algorithm: dct-basic
+Checksum: valid
+Recovered message: artist=demo;license=no-ai-training
+```
+
+If `--sidecar` is omitted it defaults to `<image-basename>.openartshield.json`.
+
 ### Embed a watermark
 
 ```bash
@@ -426,7 +490,7 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | [`@openartshield/core`](packages/core) | Pure SDK: `PixelImage`, DCT, payload encoding, watermark embed/extract, PSNR/SSIM, audit primitives. No IO. |
 | [`@openartshield/node`](packages/node) | Node image IO (PNG/JPEG/WebP via `sharp`) and deterministic transform simulations.                          |
-| [`@openartshield/cli`](packages/cli)   | The `oas` command-line interface: `embed`, `extract`, `audit`, `capacity`, `version`.                       |
+| [`@openartshield/cli`](packages/cli)   | The `oas` CLI: `protect`, `verify`, `embed`, `extract`, `audit`, `capacity`, `version`.                     |
 
 ### Built-in transforms
 
