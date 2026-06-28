@@ -3,3 +3,6 @@ dist/
 .turbo/
 coverage/
 pnpm-lock.yaml
+
+# Generated audit artifacts - produced verbatim by the CLI, not hand-formatted.
+examples/reports/
