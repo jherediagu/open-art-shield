@@ -82,6 +82,7 @@ export function buildCli() {
     .option("--strength <strength>", "Embedding strength (default 8)")
     .option("--repetitions <repetitions>", "Repetition coding count (default 5)")
     .option("--out <out>", "Path to write the JSON audit report")
+    .option("--html <path>", "Also write a standalone HTML report")
     .option("--save-protected <path>", "Also write the protected image to this path")
     .example('  oas audit protected.png --message "artist=demo" --seed 123 --out report.json')
     .action(async (input: string, options: Record<string, unknown>) => {
@@ -92,6 +93,7 @@ export function buildCli() {
         strength: optionalInt(options.strength, "--strength"),
         repetitions: optionalInt(options.repetitions, "--repetitions"),
         out: typeof options.out === "string" ? options.out : undefined,
+        html: typeof options.html === "string" ? options.html : undefined,
         saveProtected:
           typeof options.saveProtected === "string" ? options.saveProtected : undefined,
       });

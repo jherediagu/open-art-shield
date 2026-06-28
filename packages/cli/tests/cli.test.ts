@@ -89,6 +89,25 @@ describe("oas audit", () => {
     const identity = onDisk.results.find((r: { transform: string }) => r.transform === "identity");
     expect(identity.messageRecovered).toBe(true);
   });
+
+  it("writes a standalone HTML report with --html", async () => {
+    const jsonPath = join(dir, "report2.json");
+    const htmlPath = join(dir, "report2.html");
+    await runAuditCommand({
+      input: inputPath,
+      message,
+      seed: 123,
+      strength: 16,
+      repetitions: 5,
+      out: jsonPath,
+      html: htmlPath,
+    });
+
+    const html = await readFile(htmlPath, "utf-8");
+    expect(html.startsWith("<!doctype html>")).toBe(true);
+    expect(html).toContain(message);
+    expect(html).toContain("identity");
+  });
 });
 
 describe("oas version", () => {

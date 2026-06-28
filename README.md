@@ -117,7 +117,8 @@ oas extract protected.png \
 
 ### Audit robustness
 
-Embeds the watermark, then runs the full transform suite and writes a JSON report:
+Embeds the watermark, then runs the full transform suite and writes a JSON report
+(add `--html report.html` for a standalone HTML version):
 
 ```bash
 oas audit input.png \
@@ -125,7 +126,8 @@ oas audit input.png \
   --seed 123 \
   --strength 8 \
   --repetitions 5 \
-  --out report.json
+  --out report.json \
+  --html report.html
 ```
 
 ### Print the version
@@ -135,6 +137,31 @@ oas version
 ```
 
 Run `oas <command> --help` for the full option list.
+
+---
+
+## Try a real audit
+
+The repository ships a complete, reproducible example under
+[`examples/`](examples/README.md): a generated source image, its watermarked
+version, and the JSON + HTML reports produced by the real CLI. After installing
+dependencies you can regenerate all of it:
+
+```bash
+pnpm build
+bash examples/commands/sample-audit.sh
+```
+
+That embeds a watermark into [`examples/images/sample-original.png`](examples/images/sample-original.png),
+runs the full transform suite, and writes
+[`examples/reports/sample-audit.json`](examples/reports/sample-audit.json) and a
+standalone [`examples/reports/sample-audit.html`](examples/reports/sample-audit.html).
+
+In that run the watermark survives light JPEG, brightness, contrast, and mild
+blur, but **fails** under heavier compression, downscaling, cropping, and the
+screenshot-style pipeline (8 / 14 transforms recovered). The honest mix is the
+point - see [`examples/README.md`](examples/README.md) for the full table and how
+to read it.
 
 ---
 
@@ -327,41 +354,16 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 
 ## Roadmap
 
-### v0.1
+The full, versioned plan lives in [`ROADMAP.md`](ROADMAP.md). In short:
 
-- TypeScript SDK
-- DCT invisible watermarking
-- payload encoding with checksum
-- repetition coding
-- attack simulation pipeline
-- JSON audit reports
-- npm CLI
-- tests and CI
+- **v0.1** (current) - DCT watermarking, extraction, deterministic transform audits, PSNR/SSIM/bit-accuracy metrics, JSON reports, CLI, tests, CI.
+- **v0.2** - reproducible examples and better reports (HTML report and example audits already landed; `oas capacity`, visual summaries next).
+- **v0.3** - additional watermarking baselines behind a shared `WatermarkAlgorithm` interface (DWT/DCT, DWT/SVD, spread-spectrum).
+- **v0.4** - provenance / C2PA experiments.
+- **v0.5** - CLIP/OpenCLIP embedding-drift and semantic-robustness metrics.
+- **v0.6** - adversarial perturbation baselines (Glaze/Mist-style), honestly measured.
 
-### v0.2
-
-- HTML visual reports
-- stronger DWT/DCT/SVD watermarking baselines
-- perceptual difference maps
-- configurable attack pipelines
-
-### v0.3
-
-- CLIP/OpenCLIP embedding drift metrics
-- image-text similarity tests
-- semantic robustness evaluation
-
-### v0.4
-
-- C2PA / Content Credentials experimental module
-- signed provenance metadata
-- machine-readable license assertions
-
-### v0.5
-
-- adversarial perturbation baselines inspired by Glaze/Mist-style research
-- diffusion-model evaluation harness
-- benchmark datasets
+See [`ROADMAP.md`](ROADMAP.md) for principles, non-goals, and research directions.
 
 ---
 

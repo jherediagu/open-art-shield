@@ -1,0 +1,148 @@
+{
+  "version": "0.1.0",
+  "image": {
+    "path": "examples/images/sample-original.png",
+    "width": 512,
+    "height": 512,
+    "channels": 3
+  },
+  "watermark": {
+    "expectedMessage": "artist=demo;license=no-ai-training",
+    "seed": 123,
+    "strength": 8,
+    "repetitions": 5
+  },
+  "results": [
+    {
+      "transform": "identity",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": null,
+      "ssim": 1
+    },
+    {
+      "transform": "jpeg_quality_95",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": 41.57334117151778,
+      "ssim": 0.9735057988543937
+    },
+    {
+      "transform": "jpeg_quality_85",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": 34.776217153647295,
+      "ssim": 0.8529283829492447
+    },
+    {
+      "transform": "jpeg_quality_70",
+      "recoveredMessage": null,
+      "messageRecovered": false,
+      "checksumValid": false,
+      "bitAccuracy": 0.9802631578947368,
+      "psnr": 33.14216313068393,
+      "ssim": 0.7601645392127423
+    },
+    {
+      "transform": "resize_75",
+      "recoveredMessage": null,
+      "messageRecovered": false,
+      "checksumValid": false,
+      "bitAccuracy": 0.9835526315789473,
+      "psnr": 32.74598994182838,
+      "ssim": 0.7276792652315083
+    },
+    {
+      "transform": "resize_50",
+      "recoveredMessage": null,
+      "messageRecovered": false,
+      "checksumValid": false,
+      "bitAccuracy": 0.9671052631578947,
+      "psnr": 32.42701673367924,
+      "ssim": 0.687896873571633
+    },
+    {
+      "transform": "center_crop_90",
+      "recoveredMessage": null,
+      "messageRecovered": false,
+      "checksumValid": false,
+      "bitAccuracy": 0.506578947368421,
+      "psnr": 23.42379561407558,
+      "ssim": 0.46338338960412423
+    },
+    {
+      "transform": "gaussian_blur_0_75",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": 34.56163582127816,
+      "ssim": 0.8026378338029083
+    },
+    {
+      "transform": "gaussian_blur_1_25",
+      "recoveredMessage": null,
+      "messageRecovered": false,
+      "checksumValid": false,
+      "bitAccuracy": 0.993421052631579,
+      "psnr": 31.86375562341425,
+      "ssim": 0.674436843059093
+    },
+    {
+      "transform": "brightness_0_9",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": 23.432728735666714,
+      "ssim": 0.9884616215520845
+    },
+    {
+      "transform": "brightness_1_1",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": 23.309396502796474,
+      "ssim": 0.9901216284284116
+    },
+    {
+      "transform": "contrast_0_9",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": 35.06695505084646,
+      "ssim": 0.996340973473822
+    },
+    {
+      "transform": "contrast_1_1",
+      "recoveredMessage": "artist=demo;license=no-ai-training",
+      "messageRecovered": true,
+      "checksumValid": true,
+      "bitAccuracy": 1,
+      "psnr": 35.86313218318861,
+      "ssim": 0.9967869186241435
+    },
+    {
+      "transform": "screenshot_simulation",
+      "recoveredMessage": null,
+      "messageRecovered": false,
+      "checksumValid": false,
+      "bitAccuracy": 0.9210526315789473,
+      "psnr": 32.12793022499901,
+      "ssim": 0.6932580725375364
+    }
+  ],
+  "summary": {
+    "totalTransforms": 14,
+    "successfulRecoveries": 8,
+    "averageBitAccuracy": 0.9537124060150376
+  }
+}
