@@ -6,6 +6,8 @@ import { extractCommand } from "./commands/extract.js";
 import { auditCommand } from "./commands/audit.js";
 import { aiAuditCommand } from "./commands/ai-audit.js";
 import { capacityCommand } from "./commands/capacity.js";
+import { protectCommand } from "./commands/protect.js";
+import { verifyCommand } from "./commands/verify.js";
 import { versionCommand } from "./commands/version.js";
 import { CLI_VERSION, failure } from "./utils/output.js";
 import { CliError, errorMessage } from "./utils/errors.js";

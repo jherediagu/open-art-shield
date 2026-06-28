@@ -54,6 +54,10 @@ export { Prng, seededPermutation } from "./utils/prng.js";
 export { bytesToBits, bitsToBytes } from "./utils/bits.js";
 export { clamp, clampByte } from "./utils/math.js";
 
+// Sidecar metadata.
+export { SIDECAR_ALGORITHM, buildSidecar, serializeSidecar, parseSidecar } from "./sidecar.js";
+export type { SidecarMetadata, BuildSidecarParams } from "./sidecar.js";
+
 // Audit (runAudit, serializeReport, buildSummary are on the SDK surface above).
 export { REPORT_VERSION } from "./audit/types.js";
 export type { ImageTransform, AuditConfig, AuditResult, AuditReport } from "./audit/types.js";

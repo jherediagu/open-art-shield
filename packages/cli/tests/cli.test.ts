@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -9,9 +9,20 @@ import { runAiAudit } from "../src/commands/ai-audit.js";
 import { runExtract } from "../src/commands/extract.js";
 import { runAuditCommand } from "../src/commands/audit.js";
 import { runCapacity } from "../src/commands/capacity.js";
+import { runProtect } from "../src/commands/protect.js";
+import { runVerify } from "../src/commands/verify.js";
 import { getVersion, versionCommand } from "../src/commands/version.js";
 import { CLI_VERSION } from "../src/utils/output.js";
 import { createSyntheticImage } from "./helpers.js";
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const message = "artist=demo;license=no-ai-training";
 let dir: string;
