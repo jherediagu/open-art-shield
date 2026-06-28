@@ -57,3 +57,13 @@ export { clamp, clampByte } from "./utils/math.js";
 // Audit (runAudit, serializeReport, buildSummary are on the SDK surface above).
 export { REPORT_VERSION } from "./audit/types.js";
 export type { ImageTransform, AuditConfig, AuditResult, AuditReport } from "./audit/types.js";
+
+// AI-perception measurement (runEmbeddingAudit etc. are on the SDK surface above).
+export { EMBEDDING_REPORT_VERSION, EMBEDDING_AUDIT_LIMITATIONS } from "./ai/types.js";
+export type {
+  Embedding,
+  EmbeddingBackend,
+  EmbeddingAuditConfig,
+  EmbeddingAuditReport,
+  TransformDriftResult,
+} from "./ai/types.js";

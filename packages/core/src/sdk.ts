@@ -5,6 +5,10 @@ export { extractWatermark } from "./watermark/extract.js";
 export { runAudit } from "./audit/runner.js";
 export { serializeReport, buildSummary } from "./audit/report.js";
 export { renderHtmlReport } from "./audit/html.js";
+export { runEmbeddingAudit } from "./ai/runner.js";
+export { createMockEmbeddingBackend } from "./ai/mock-backend.js";
+export { serializeEmbeddingReport, renderEmbeddingHtmlReport } from "./ai/report.js";
+export { cosineSimilarity, euclideanDistance, embeddingDrift } from "./ai/metrics.js";
 export { psnr, ssim } from "./metrics/quality.js";
 export {
   bitAccuracy,

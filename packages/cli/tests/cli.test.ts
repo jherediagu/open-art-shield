@@ -3,8 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { messageByteLength } from "@openartshield/core";
-import { writeImage } from "@openartshield/node";
+import { defaultTransforms, writeImage } from "@openartshield/node";
 import { runEmbed } from "../src/commands/embed.js";
+import { runAiAudit } from "../src/commands/ai-audit.js";
 import { runExtract } from "../src/commands/extract.js";
 import { runAuditCommand } from "../src/commands/audit.js";
 import { runCapacity } from "../src/commands/capacity.js";
@@ -123,6 +124,48 @@ describe("oas capacity", () => {
 
   it("rejects an empty message", async () => {
     await expect(runCapacity({ input: inputPath, message: "" })).rejects.toThrow();
+  });
+});
+
+describe("oas ai-audit", () => {
+  it("measures embedding drift and writes JSON + HTML (mock backend)", async () => {
+    // A clearly different candidate (inverted) so drift is non-trivial.
+    const candidate = createSyntheticImage(384, 384, 3);
+    for (let i = 0; i < candidate.data.length; i++) candidate.data[i] = 255 - candidate.data[i];
+    const candPath = join(dir, "ai-candidate.png");
+    await writeImage(candidate, candPath);
+
+    const jsonPath = join(dir, "ai-audit.json");
+    const htmlPath = join(dir, "ai-audit.html");
+    const report = await runAiAudit({
+      original: inputPath,
+      candidate: candPath,
+      prompt: "an illustration",
+      out: jsonPath,
+      html: htmlPath,
+    });
+
+    expect(report.backend).toBe("mock");
+    expect(report.embedding.dimensions).toBe(64);
+    expect(report.embedding.drift).toBeGreaterThan(0);
+    expect(report.transforms).toHaveLength(defaultTransforms.length);
+    expect(report.prompt?.text).toBe("an illustration");
+
+    const onDisk = JSON.parse(await readFile(jsonPath, "utf-8"));
+    expect(onDisk.backend).toBe("mock");
+    expect(typeof onDisk.limitations).toBe("string");
+    expect((await readFile(htmlPath, "utf-8")).startsWith("<!doctype html>")).toBe(true);
+  });
+
+  it("reports ~0 drift for an image against itself", async () => {
+    const report = await runAiAudit({ original: inputPath, candidate: inputPath });
+    expect(report.embedding.drift).toBeCloseTo(0, 6);
+  });
+
+  it("rejects an unknown backend", async () => {
+    await expect(
+      runAiAudit({ original: inputPath, candidate: inputPath, backend: "gpt" }),
+    ).rejects.toThrow(/backend/i);
   });
 });
 

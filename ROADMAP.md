@@ -14,6 +14,22 @@ The project does not aim to make images AI-proof. Its goal is to provide reprodu
 - Treat watermarking, provenance, perturbation, and robustness as experimental signals, not guarantees.
 - Make it easy for artists, researchers, and developers to inspect what works, what fails, and under which parameters.
 
+## Protection layers
+
+OpenArtShield is best understood as five layers, not one watermarking tool. Each
+is an experimental signal, not a guarantee:
+
+- **Trace** - invisible watermarking, sidecar, verification. _"Can I detect or prove a signal later?"_ (started)
+- **Declare** - metadata, license assertions, C2PA/provenance. _"Can I declare ownership and usage terms?"_ (planned)
+- **Cloak** - adversarial/style perturbations aimed at model embeddings. _"Can I make style mimicry harder?"_ (planned)
+- **Poison** - dataset-poisoning experiments. _"Can I make unauthorized training less useful?"_ (research only)
+- **Measure** - robustness, visual quality, and AI-perception (embedding) drift. _"Did any of it actually work?"_ (started)
+
+Today only **Trace** and **Measure** have real implementations. The honest
+current status: OpenArtShield does not yet protect artworks from AI training or
+style mimicry - it embeds/audits watermarks and now measures embedding drift. The
+next AI-facing step is a real embedding backend, then an experimental cloak.
+
 ## v0.1 - Current foundation
 
 The first version focuses on a simple, readable baseline:
@@ -78,11 +94,12 @@ Goal: evaluate provenance as a complementary signal, not as a replacement for wa
 
 Planned improvements:
 
-- Add CLIP/OpenCLIP-based embedding drift experiments.
-- Measure image-text similarity changes after transformations.
-- Compare semantic drift between original, protected, and transformed images.
-- Add configurable embedding backends.
-- Add report sections for semantic similarity metrics.
+- Add an AI-perception (embedding drift) audit pipeline. _(done - `oas ai-audit`, deterministic mock backend)_
+- Add a real CLIP/OpenCLIP backend via `transformers.js` behind the `EmbeddingBackend` interface. _(next)_
+- Measure image-text similarity changes after transformations. _(partial - prompt drift, mock backend)_
+- Compare semantic drift between original, protected, and transformed images. _(done for the mock backend)_
+- Add configurable embedding backends. _(interface in place)_
+- Add report sections for semantic similarity metrics. _(done)_
 
 Goal: start measuring whether protection techniques meaningfully affect model-facing representations.
 
