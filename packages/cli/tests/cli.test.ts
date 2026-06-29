@@ -6,6 +6,7 @@ import { messageByteLength } from "@openartshield/core";
 import { defaultTransforms, writeImage } from "@openartshield/node";
 import { runEmbed } from "../src/commands/embed.js";
 import { runAiAudit } from "../src/commands/ai-audit.js";
+import { runCloakCommand } from "../src/commands/cloak.js";
 import { runExtract } from "../src/commands/extract.js";
 import { runAuditCommand } from "../src/commands/audit.js";
 import { runCapacity } from "../src/commands/capacity.js";
@@ -284,6 +285,58 @@ describe("oas verify", () => {
     await runProtect({ input: inputPath, message, seed: 5, repetitions: 5, out });
     const v = await runVerify({ input: out }); // no --sidecar
     expect(v.recoveredMessage).toBe(message);
+  });
+});
+
+describe("oas cloak", () => {
+  it("writes a cloaked image + report when a candidate improves (mock backend)", async () => {
+    const out = join(dir, "cloaked.png");
+    const reportPath = join(dir, "cloak.json");
+    const htmlPath = join(dir, "cloak.html");
+    const { report, wroteImage } = await runCloakCommand({
+      input: inputPath,
+      out,
+      backend: "mock",
+      strength: 8,
+      steps: 8,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      report: reportPath,
+      html: htmlPath,
+    });
+
+    expect(wroteImage).toBe(true);
+    expect(report.result.improved).toBe(true);
+    expect(await exists(out)).toBe(true);
+
+    const onDisk = JSON.parse(await readFile(reportPath, "utf-8"));
+    expect(onDisk.version).toBe("0.1.0");
+    expect(Array.isArray(onDisk.limitations)).toBe(true);
+    expect((await readFile(htmlPath, "utf-8")).startsWith("<!doctype html>")).toBe(true);
+  });
+
+  it("does not write an image when nothing improves, but still writes the report", async () => {
+    const out = join(dir, "cloaked-noimprove.png");
+    const reportPath = join(dir, "cloak-noimprove.json");
+    const { report, wroteImage } = await runCloakCommand({
+      input: inputPath,
+      out,
+      backend: "mock",
+      strength: 0, // identical candidates => no drift improvement
+      steps: 3,
+      report: reportPath,
+    });
+
+    expect(wroteImage).toBe(false);
+    expect(report.result.improved).toBe(false);
+    expect(await exists(out)).toBe(false);
+    expect(await exists(reportPath)).toBe(true);
+  });
+
+  it("fails clearly when --backend clip is selected but the optional dep is missing", async () => {
+    await expect(
+      runCloakCommand({ input: inputPath, out: join(dir, "x.png"), backend: "clip", steps: 1 }),
+    ).rejects.toThrow(/@huggingface\/transformers/);
   });
 });
 

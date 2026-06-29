@@ -318,9 +318,54 @@ There are two backends:
 
 Telling detail: an _invisible_ DCT watermark produces near-zero embedding drift -
 i.e. watermarking does **not** change how a model "sees" the image. That gap is
-exactly what a future `oas cloak` would target. (With the real `clip` backend, a
+exactly what `oas cloak` (below) targets. (With the real `clip` backend, a
 clearly different image drifts ~0.14 in our quick local check, while an image
 against itself drifts 0 - sanity confirmed.)
+
+### Experimental cloak
+
+`oas cloak` is an experimental embedding-space perturbation prototype. It tries to
+increase embedding drift under a selected backend while keeping visual quality
+within configured thresholds (PSNR/SSIM). It is the first protection-facing
+feature - but it is a measurement-driven experiment, not a guarantee.
+
+**This is not AI-proof protection. It does not prevent training. It is not Glaze
+or Nightshade.** It uses a simple seeded random search (a real optimizer and
+transform-robust EOT optimization are future work).
+
+```bash
+pnpm add @huggingface/transformers
+
+oas cloak artwork.png \
+  --backend clip \
+  --model Xenova/clip-vit-base-patch32 \
+  --strength 4 \
+  --steps 8 \
+  --out artwork.cloaked.png \
+  --report artwork.cloak.json \
+  --html artwork.cloak.html
+
+# then measure the result independently
+oas ai-audit artwork.png artwork.cloaked.png \
+  --backend clip \
+  --model Xenova/clip-vit-base-patch32 \
+  --out artwork.ai-audit.json
+```
+
+It only writes a cloaked image when a candidate actually improved drift within
+the quality limits; otherwise it tells you so and writes nothing misleading. The
+`mock` backend is the default for tests but is **not meaningful** for real
+cloaking (the CLI warns you) - use `--backend clip`. If `@huggingface/transformers`
+is not installed, the command fails with a clear message.
+
+In a quick local run with the real `clip` backend, even this naive random search
+moved CLIP drift from `0` to ~`0.09` at PSNR ~37 / SSIM ~0.97, and ~`0.07` of
+that drift survived the transform suite.
+
+> **Strong caveat.** A higher CLIP drift score does **not** mean the image is
+> protected from all AI systems. It only means the selected embedding backend
+> changed more under the measured conditions. Always evaluate the output with
+> `oas ai-audit` and the robustness report, and treat everything as experimental.
 
 ### Print the version
 
@@ -532,11 +577,11 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 
 ## Package overview
 
-| Package                                | Description                                                                                                 |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [`@openartshield/core`](packages/core) | Pure SDK: `PixelImage`, DCT, payload encoding, watermark embed/extract, PSNR/SSIM, audit primitives. No IO. |
-| [`@openartshield/node`](packages/node) | Node image IO (PNG/JPEG/WebP via `sharp`) and deterministic transform simulations.                          |
-| [`@openartshield/cli`](packages/cli)   | The `oas` CLI: `embed`, `extract`, `audit`, `capacity`, `ai-audit`, `version`.                              |
+| Package                                | Description                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [`@openartshield/core`](packages/core) | Pure SDK: `PixelImage`, DCT, payload encoding, watermark embed/extract, PSNR/SSIM, audit primitives. No IO.  |
+| [`@openartshield/node`](packages/node) | Node image IO (PNG/JPEG/WebP via `sharp`) and deterministic transform simulations.                           |
+| [`@openartshield/cli`](packages/cli)   | The `oas` CLI: `protect`, `verify`, `embed`, `extract`, `audit`, `capacity`, `ai-audit`, `cloak`, `version`. |
 
 ### Built-in transforms
 

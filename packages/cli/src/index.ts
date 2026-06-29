@@ -5,6 +5,7 @@ import { embedCommand } from "./commands/embed.js";
 import { extractCommand } from "./commands/extract.js";
 import { auditCommand } from "./commands/audit.js";
 import { aiAuditCommand } from "./commands/ai-audit.js";
+import { cloakCommand } from "./commands/cloak.js";
 import { capacityCommand } from "./commands/capacity.js";
 import { protectCommand } from "./commands/protect.js";
 import { verifyCommand } from "./commands/verify.js";
@@ -27,6 +28,16 @@ function requiredInt(value: unknown, flag: string): number {
   const n = optionalInt(value, flag);
   if (n === undefined) {
     throw new CliError(`${flag} is required.`);
+  }
+  return n;
+}
+
+// Like optionalInt but allows fractional values (e.g. --max-ssim-drop 0.02).
+function optionalNumber(value: unknown, flag: string): number | undefined {
+  if (value === undefined) return undefined;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) {
+    throw new CliError(`${flag} must be a number, received "${String(value)}".`);
   }
   return n;
 }
@@ -162,6 +173,40 @@ export function buildCli() {
       await verifyCommand({
         input,
         sidecar: typeof options.sidecar === "string" ? options.sidecar : undefined,
+      });
+    });
+
+  cli
+    .command("cloak <input>", "Experimental: perturb an image to increase embedding drift")
+    .option("--backend <id>", 'Embedding backend: "mock" (default) or "clip"')
+    .option("--model <id>", "Model id for the clip backend")
+    .option("--strength <number>", "Max per-channel pixel change (default 4)")
+    .option("--steps <number>", "Number of candidate perturbations (default 8)")
+    .option("--seed <number>", "Seed for the candidate generator (default 123)")
+    .option("--min-psnr <number>", "Reject candidates below this PSNR (default 38)")
+    .option(
+      "--max-ssim-drop <number>",
+      "Reject candidates whose SSIM drops more than this (default 0.02)",
+    )
+    .option("--out <path>", "Output path for the cloaked image")
+    .option("--report <path>", "Path to write the JSON cloak report")
+    .option("--html <path>", "Also write a standalone HTML report")
+    .example(
+      "  oas cloak artwork.png --backend clip --strength 4 --steps 8 --out artwork.cloaked.png --report cloak.json",
+    )
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await cloakCommand({
+        input,
+        out: requiredString(options.out, "--out"),
+        backend: typeof options.backend === "string" ? options.backend : undefined,
+        model: typeof options.model === "string" ? options.model : undefined,
+        strength: optionalNumber(options.strength, "--strength"),
+        steps: optionalInt(options.steps, "--steps"),
+        seed: optionalInt(options.seed, "--seed"),
+        minPsnr: optionalNumber(options.minPsnr, "--min-psnr"),
+        maxSsimDrop: optionalNumber(options.maxSsimDrop, "--max-ssim-drop"),
+        report: typeof options.report === "string" ? options.report : undefined,
+        html: typeof options.html === "string" ? options.html : undefined,
       });
     });
 

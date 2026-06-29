@@ -21,14 +21,16 @@ is an experimental signal, not a guarantee:
 
 - **Trace** - invisible watermarking, sidecar, verification. _"Can I detect or prove a signal later?"_ (started)
 - **Declare** - metadata, license assertions, C2PA/provenance. _"Can I declare ownership and usage terms?"_ (planned)
-- **Cloak** - adversarial/style perturbations aimed at model embeddings. _"Can I make style mimicry harder?"_ (planned)
+- **Cloak** - adversarial/style perturbations aimed at model embeddings. _"Can I make style mimicry harder?"_ (started - experimental `oas cloak`)
 - **Poison** - dataset-poisoning experiments. _"Can I make unauthorized training less useful?"_ (research only)
 - **Measure** - robustness, visual quality, and AI-perception (embedding) drift. _"Did any of it actually work?"_ (started)
 
-Today only **Trace** and **Measure** have real implementations. The honest
-current status: OpenArtShield does not yet protect artworks from AI training or
-style mimicry - it embeds/audits watermarks and now measures embedding drift. The
-next AI-facing step is a real embedding backend, then an experimental cloak.
+**Trace** and **Measure** are implemented; **Cloak** has a first experimental
+prototype. The honest current status: OpenArtShield does not yet protect artworks
+from AI training or style mimicry. It embeds/audits watermarks, measures embedding
+drift, and can now generate a measurable (but unproven) embedding perturbation.
+The next step is making that cloak survive transforms (EOT) and using a smarter
+optimizer.
 
 ## v0.1 - Current foundation
 
@@ -108,12 +110,13 @@ Goal: start measuring whether protection techniques meaningfully affect model-fa
 
 Planned improvements:
 
-- Add simple adversarial perturbation baselines.
+- Add a first experimental embedding cloak. _(done - `oas cloak`, seeded random search, mock + clip backends)_
+- Add perturbation quality guardrails (PSNR/SSIM). _(done)_
+- Add EOT-based robustness: optimize the cloak _through_ JPEG/resize/blur/screenshot transforms. _(next)_
+- Replace random search with a smarter optimizer.
 - Study Glaze/Mist-style research directions.
-- Add perturbation quality metrics.
-- Compare perturbation survival under resize, JPEG, blur, and screenshot-like transformations.
 - Add benchmark datasets where licensing allows.
-- Clearly document known limitations and failure modes.
+- Clearly document known limitations and failure modes. _(done)_
 
 Goal: evaluate perturbation-based techniques without overclaiming their effectiveness.
 
