@@ -1,5 +1,6 @@
 import type { PixelImage } from "../types.js";
 import type { ImageTransform } from "../audit/types.js";
+import type { EotMode } from "./eot.js";
 
 // Experimental embedding cloak.
 //
@@ -9,7 +10,7 @@ import type { ImageTransform } from "../audit/types.js";
 // transform suite. A higher drift score only means the selected backend changed
 // more under the measured conditions - nothing more.
 
-export const CLOAK_REPORT_VERSION = "0.1.0";
+export const CLOAK_REPORT_VERSION = "0.2.0";
 
 export const DEFAULT_CLOAK_STRENGTH = 4;
 export const DEFAULT_CLOAK_STEPS = 8;
@@ -39,6 +40,16 @@ export type CloakConfig = {
   maxSsimDrop?: number;
   /** Transforms used to measure whether the cloak survives (robustness). */
   transforms?: ImageTransform[];
+  /**
+   * EOT (Expectation Over Transformation) mode used to score candidates. Recorded
+   * in the report. Defaults to "none" (clean-only scoring = original behavior).
+   */
+  eotMode?: EotMode;
+  /**
+   * Transforms applied to each candidate during scoring (EOT). The clean pass is
+   * always scored, so this excludes it. Empty = clean-only scoring.
+   */
+  eotTransforms?: ImageTransform[];
   inputPath?: string;
   outputPath?: string;
 };
@@ -65,6 +76,24 @@ export type CloakReport = {
     ssim: number;
     /** How many candidates were rejected by the quality guardrails. */
     candidatesRejected: number;
+  };
+  /**
+   * EOT (Expectation Over Transformation) summary for the chosen image. When mode
+   * is "none" the chosen image is scored on the clean pixels only, so cleanDrift,
+   * averageDrift and minDrift are all equal and equal to result.bestDrift.
+   */
+  eot: {
+    mode: EotMode;
+    /** Scoring variants used, e.g. ["clean", "jpeg_quality_95", ...]. */
+    transforms: string[];
+    /** Embedding drift of the chosen image on the clean pixels. */
+    cleanDrift: number;
+    /** Average embedding drift across all scoring variants (the search score). */
+    averageDrift: number;
+    /** Minimum embedding drift across all scoring variants (worst-case survival). */
+    minDrift: number;
+    /** Total embedding backend evaluations performed during the run. */
+    embeddingEvaluations: number;
   };
   robustness: {
     transformsTested: number;

@@ -83,3 +83,12 @@ export {
   DEFAULT_CLOAK_MAX_SSIM_DROP,
 } from "./cloak/types.js";
 export type { CloakConfig, CloakReport, CloakResult } from "./cloak/types.js";
+export {
+  EOT_MODES,
+  DEFAULT_EOT_MODE,
+  EOT_TRANSFORM_NAMES,
+  isEotMode,
+  resolveEotMode,
+  eotTransformNames,
+} from "./cloak/eot.js";
+export type { EotMode } from "./cloak/eot.js";
