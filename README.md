@@ -428,6 +428,46 @@ to read it.
 
 ---
 
+## Experimental cloak example
+
+The repository also ships a complete, reproducible run of the **experimental**
+cloak flow with a real CLIP backend and EOT robustness, under
+[`examples/cloak-eot/`](examples/cloak-eot/README.md). The cloaked image carries a
+visually-bounded perturbation that increases CLIP embedding drift; it should look
+essentially identical to the original.
+
+| Original                                            | Cloaked                                           |
+| --------------------------------------------------- | ------------------------------------------------- |
+| ![Original](examples/cloak-eot/images/original.png) | ![Cloaked](examples/cloak-eot/images/cloaked.png) |
+
+Real numbers from
+[`examples/cloak-eot/reports/cloak-eot-report.json`](examples/cloak-eot/reports/cloak-eot-report.json)
+(`--backend clip --model Xenova/clip-vit-base-patch32 --strength 4 --steps 12 --eot standard`):
+
+| Metric   | Value                          |     | Metric                      | Value  |
+| -------- | ------------------------------ | --- | --------------------------- | ------ |
+| Backend  | `Xenova/clip-vit-base-patch32` |     | Clean drift                 | 0.0735 |
+| EOT mode | `standard` (11 variants)       |     | Average EOT drift           | 0.0680 |
+| PSNR     | 40.73 dB                       |     | Minimum EOT drift           | 0.0416 |
+| SSIM     | 0.9821                         |     | Mean drift after transforms | 0.0638 |
+
+Reproduce it (the CLIP backend is an optional dependency, not required for CI):
+
+```bash
+pnpm build
+pnpm add @huggingface/transformers
+bash examples/cloak-eot/commands/run-cloak-eot.sh
+```
+
+> This is an **experimental embedding-space perturbation measured against CLIP**,
+> not AI-proof protection. It does not prevent training and it is not Glaze,
+> Nightshade, or C2PA. CLIP is only one proxy model - a higher drift score means
+> the selected backend changed more under the measured conditions, nothing more.
+> See [`examples/cloak-eot/README.md`](examples/cloak-eot/README.md) for the full
+> tables, honest caveats, and how to read the minimum-drift floor.
+
+---
+
 ## SDK usage
 
 ### Pure core (`@openartshield/core`)
