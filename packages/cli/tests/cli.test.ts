@@ -310,9 +310,74 @@ describe("oas cloak", () => {
     expect(await exists(out)).toBe(true);
 
     const onDisk = JSON.parse(await readFile(reportPath, "utf-8"));
-    expect(onDisk.version).toBe("0.1.0");
+    expect(onDisk.version).toBe("0.2.0");
     expect(Array.isArray(onDisk.limitations)).toBe(true);
+    // Default run uses EOT mode "none" (clean-only scoring).
+    expect(onDisk.eot.mode).toBe("none");
+    expect(onDisk.eot.transforms).toEqual(["clean"]);
     expect((await readFile(htmlPath, "utf-8")).startsWith("<!doctype html>")).toBe(true);
+  });
+
+  it("eot mild scores candidates through the expected transforms", async () => {
+    const { report } = await runCloakCommand({
+      input: inputPath,
+      out: join(dir, "cloaked-mild.png"),
+      backend: "mock",
+      strength: 8,
+      steps: 3,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      eot: "mild",
+    });
+    expect(report.eot.mode).toBe("mild");
+    expect(report.eot.transforms).toEqual([
+      "clean",
+      "jpeg_quality_95",
+      "jpeg_quality_85",
+      "brightness_0_9",
+      "brightness_1_1",
+      "gaussian_blur_0_75",
+    ]);
+    expect(report.eot.embeddingEvaluations).toBeGreaterThan(0);
+  });
+
+  it("eot standard scores candidates through the expected transforms", async () => {
+    const { report } = await runCloakCommand({
+      input: inputPath,
+      out: join(dir, "cloaked-standard.png"),
+      backend: "mock",
+      strength: 8,
+      steps: 2,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      eot: "standard",
+    });
+    expect(report.eot.mode).toBe("standard");
+    expect(report.eot.transforms).toEqual([
+      "clean",
+      "jpeg_quality_95",
+      "jpeg_quality_85",
+      "jpeg_quality_70",
+      "resize_75",
+      "brightness_0_9",
+      "brightness_1_1",
+      "contrast_0_9",
+      "contrast_1_1",
+      "gaussian_blur_0_75",
+      "screenshot_simulation",
+    ]);
+  });
+
+  it("fails clearly on an unknown eot mode", async () => {
+    await expect(
+      runCloakCommand({
+        input: inputPath,
+        out: join(dir, "cloaked-bad-eot.png"),
+        backend: "mock",
+        steps: 1,
+        eot: "wild",
+      }),
+    ).rejects.toThrow(/Unknown EOT mode "wild"/);
   });
 
   it("does not write an image when nothing improves, but still writes the report", async () => {

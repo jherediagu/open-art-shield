@@ -18,7 +18,7 @@ function fmt(value: number | null, digits = 4): string {
 
 /** Render a cloak report as a standalone HTML page. */
 export function renderCloakHtmlReport(report: CloakReport): string {
-  const { input, output, backend, parameters, result, robustness } = report;
+  const { input, output, backend, parameters, result, eot, robustness } = report;
   const limitations = report.limitations.map((l) => `      <li>${escapeHtml(l)}</li>`).join("\n");
 
   return `<!doctype html>
@@ -64,6 +64,12 @@ export function renderCloakHtmlReport(report: CloakReport): string {
     <div><b>PSNR (dB)</b>${fmt(result.psnr, 2)}</div>
     <div><b>SSIM</b>${result.ssim.toFixed(4)}</div>
     <div><b>Candidates rejected</b>${result.candidatesRejected}</div>
+    <div><b>EOT mode</b>${escapeHtml(eot.mode)}</div>
+    <div><b>Clean drift</b>${eot.cleanDrift.toFixed(4)}</div>
+    <div><b>Avg EOT drift</b>${eot.averageDrift.toFixed(4)}</div>
+    <div><b>Min EOT drift</b>${eot.minDrift.toFixed(4)}</div>
+    <div><b>Embedding evaluations</b>${eot.embeddingEvaluations}</div>
+    <div><b>EOT transforms</b>${eot.transforms.map((t) => `<code>${escapeHtml(t)}</code>`).join(", ")}</div>
     <div><b>Mean drift after transforms</b>${robustness.averageDriftAfterTransforms.toFixed(4)} (${robustness.transformsTested})</div>
   </div>
 

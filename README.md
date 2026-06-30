@@ -330,8 +330,8 @@ within configured thresholds (PSNR/SSIM). It is the first protection-facing
 feature - but it is a measurement-driven experiment, not a guarantee.
 
 **This is not AI-proof protection. It does not prevent training. It is not Glaze
-or Nightshade.** It uses a simple seeded random search (a real optimizer and
-transform-robust EOT optimization are future work).
+or Nightshade.** It uses a simple seeded random search (a real optimizer is still
+future work).
 
 ```bash
 pnpm add @huggingface/transformers
@@ -340,7 +340,8 @@ oas cloak artwork.png \
   --backend clip \
   --model Xenova/clip-vit-base-patch32 \
   --strength 4 \
-  --steps 8 \
+  --steps 12 \
+  --eot standard \
   --out artwork.cloaked.png \
   --report artwork.cloak.json \
   --html artwork.cloak.html
@@ -351,6 +352,31 @@ oas ai-audit artwork.png artwork.cloaked.png \
   --model Xenova/clip-vit-base-patch32 \
   --out artwork.ai-audit.json
 ```
+
+#### EOT robustness (`--eot`)
+
+By default each candidate is scored only on the clean image. With `--eot` the
+score becomes the **average embedding drift across a set of deterministic
+transformations** (Expectation Over Transformation), so the search prefers
+perturbations that still move the embedding after everyday image handling -
+JPEG re-compression, resize, blur, brightness/contrast, and a screenshot
+simulation - instead of ones that only affect the pristine pixels.
+
+| mode       | variants scored per candidate                                                                                     |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| `none`     | clean only (default - same as before)                                                                             |
+| `mild`     | clean, jpeg 95/85, brightness 0.9/1.1, gaussian blur 0.75                                                         |
+| `standard` | clean, jpeg 95/85/70, resize 75%, brightness 0.9/1.1, contrast 0.9/1.1, gaussian blur 0.75, screenshot simulation |
+
+Visual-quality guardrails (PSNR/SSIM) are unchanged: a candidate that fails the
+limits is rejected **before** any EOT scoring, so EOT never trades visible
+quality for robustness. The cloak report adds an `eot` block with the mode, the
+transforms used, the chosen image's clean drift, the average and minimum EOT
+drift, and the total number of embedding evaluations.
+
+EOT makes the search more robust by scoring candidates through transformations,
+but it still **gives no protection guarantees** - a higher averaged drift is a
+measurement under the chosen backend and transforms, not protection from AI.
 
 It only writes a cloaked image when a candidate actually improved drift within
 the quality limits; otherwise it tells you so and writes nothing misleading. The

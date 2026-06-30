@@ -188,11 +188,12 @@ export function buildCli() {
       "--max-ssim-drop <number>",
       "Reject candidates whose SSIM drops more than this (default 0.02)",
     )
+    .option("--eot <mode>", 'EOT robustness mode: "none" (default), "mild", or "standard"')
     .option("--out <path>", "Output path for the cloaked image")
     .option("--report <path>", "Path to write the JSON cloak report")
     .option("--html <path>", "Also write a standalone HTML report")
     .example(
-      "  oas cloak artwork.png --backend clip --strength 4 --steps 8 --out artwork.cloaked.png --report cloak.json",
+      "  oas cloak artwork.png --backend clip --strength 4 --steps 12 --eot standard --out artwork.cloaked.png --report cloak.json",
     )
     .action(async (input: string, options: Record<string, unknown>) => {
       await cloakCommand({
@@ -205,6 +206,7 @@ export function buildCli() {
         seed: optionalInt(options.seed, "--seed"),
         minPsnr: optionalNumber(options.minPsnr, "--min-psnr"),
         maxSsimDrop: optionalNumber(options.maxSsimDrop, "--max-ssim-drop"),
+        eot: typeof options.eot === "string" ? options.eot : undefined,
         report: typeof options.report === "string" ? options.report : undefined,
         html: typeof options.html === "string" ? options.html : undefined,
       });
