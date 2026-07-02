@@ -1,6 +1,6 @@
 # @openartshield/cli
 
-The `oas` command-line interface for [OpenArtShield](../../README.md): embed, extract, and audit invisible image watermarks.
+The `oas` command-line interface for [OpenArtShield](../../README.md): the user-facing surface over the project's protection layers - Trace (`protect` / `embed` / `extract` / `verify`), Measure (`ai-audit`), Cloak (`cloak`), and Audit (`audit`).
 
 ```bash
 oas embed input.png --message "artist=demo" --seed 123 --out protected.png

@@ -17,6 +17,15 @@ OpenArtShield is a TypeScript-first, open-source SDK and CLI for experimenting w
 
 ---
 
+## Documentation
+
+- [Getting started](./docs/GETTING_STARTED.md)
+- [Demo guide](./docs/DEMO.md)
+- [Architecture overview](./docs/ARCHITECTURE.md)
+- [Roadmap](./ROADMAP.md)
+
+---
+
 ## What does it do?
 
 OpenArtShield embeds an invisible watermark, runs realistic transformations, then
