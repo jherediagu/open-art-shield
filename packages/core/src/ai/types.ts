@@ -1,5 +1,6 @@
 import type { PixelImage } from "../types.js";
 import type { ImageTransform } from "../audit/types.js";
+import type { TransferReport } from "./transfer.js";
 
 // AI-perception measurement layer.
 //
@@ -48,7 +49,7 @@ export type TransformDriftResult = {
 };
 
 export type EmbeddingAuditReport = {
-  version: "0.1.0";
+  version: typeof EMBEDDING_REPORT_VERSION;
   backend: string;
   image: { original?: string; candidate?: string };
   embedding: {
@@ -72,11 +73,17 @@ export type EmbeddingAuditReport = {
     transformsTested: number;
     meanDriftAfterTransforms: number;
   };
+  /**
+   * Optional transfer measurement: drift for the same image pair on additional
+   * embedding models, with per-model transfer ratios. Present only when
+   * comparison models were requested.
+   */
+  transfer?: TransferReport;
   /** Honest, machine-readable caveat carried inside the report. */
   limitations: string;
 };
 
-export const EMBEDDING_REPORT_VERSION = "0.1.0";
+export const EMBEDDING_REPORT_VERSION = "0.2.0";
 
 export const EMBEDDING_AUDIT_LIMITATIONS =
   "Embedding drift measures how a model's representation changes. It does not " +

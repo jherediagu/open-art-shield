@@ -95,6 +95,15 @@ oas ai-audit original.png candidate.png \
 If `@huggingface/transformers` is not installed, `--backend clip` fails with a
 clear message; nothing else in the pipeline requires it.
 
+To check whether drift transfers beyond the primary model, add one or more
+repeatable `--compare-model` flags (see the transfer measurement section of the
+[root README](../README.md)):
+
+```bash
+oas ai-audit original.png cloaked.png \
+  --backend clip --compare-model Xenova/clip-vit-base-patch16
+```
+
 ## Using the SDK
 
 The packages are also consumable as libraries:
