@@ -1,8 +1,9 @@
 # OpenArtShield Demo Guide
 
-A short, hands-on tour of what the project does and how to run it. Everything
-below uses the default `mock` backend, so no model weights or network access are
-required - you can follow it end to end after a single `pnpm build`.
+The high-level narrative of the project: what problem it addresses, how the
+layers fit together, what to show, and what not to claim. For the hands-on
+command walkthrough (install, build, and every command below with runnable
+flags), see [GETTING_STARTED.md](./GETTING_STARTED.md).
 
 ## 1. Problem
 
@@ -42,81 +43,26 @@ for data flows and design decisions):
 - `@openartshield/node` — image IO, transforms, optional CLIP backend.
 - `@openartshield/cli` — the user-facing `oas` commands.
 
-## 4. Demo flow
+## 4. What to show
 
-Set up once:
+A natural tour follows the layers in order — each step is one command, spelled
+out in [GETTING_STARTED.md](./GETTING_STARTED.md#quickstart):
 
-```bash
-pnpm install
-pnpm build
-pnpm test
-```
+1. **Trace** — `oas protect` embeds an invisible watermark and writes an audit
+   report plus a sidecar.
+2. **Verify** — `oas verify` confirms the watermark from its sidecar.
+3. **Measure** — `oas ai-audit` quantifies embedding drift between two images.
+4. **Cloak** (experimental) — `oas cloak --eot standard` searches for a
+   visually-bounded perturbation scored across transformations.
 
-The `oas` binary lives at `packages/cli/dist/index.js` after `pnpm build`; either
-add it to your PATH or run `node packages/cli/dist/index.js <command>`.
+Everything runs with the default `mock` backend (no model weights, no network).
+The `mock` backend is a deterministic placeholder, so its cloak numbers are **not
+meaningful** — for real numbers, install the optional CLIP backend
+([instructions](./GETTING_STARTED.md#using-the-real-clip-backend-optional)).
 
-**Trace** — embed an invisible watermark, run an audit, and write a sidecar:
-
-```bash
-oas protect examples/images/sample-original.png \
-  --message "artist=demo;license=no-ai-training" \
-  --out protected.png \
-  --html protected.audit.html
-```
-
-This writes `protected.png`, `protected.audit.json` (+ the HTML above), and a
-`protected.openartshield.json` sidecar.
-
-**Verify** — confirm the watermark straight from its sidecar:
-
-```bash
-oas verify protected.png \
-  --sidecar protected.openartshield.json
-```
-
-**Measure** — quantify how the model "sees" the original vs. the protected image:
-
-```bash
-oas ai-audit examples/images/sample-original.png protected.png \
-  --backend mock \
-  --out ai-audit.json \
-  --html ai-audit.html
-```
-
-**Experimental cloak** — search for a visually-bounded perturbation that increases
-embedding drift, scored across transformations (EOT):
-
-```bash
-oas cloak examples/images/sample-original.png \
-  --backend mock \
-  --strength 4 \
-  --steps 12 \
-  --eot standard \
-  --out cloaked.png \
-  --report cloak-report.json \
-  --html cloak-report.html
-```
-
-> The `mock` backend is a deterministic placeholder, not a perceptual model, so
-> its cloak numbers are **not meaningful** — it exists so the whole pipeline runs
-> in CI without heavy installs. For real numbers, use the CLIP backend.
-
-**Real CLIP** — the CLIP backend is an optional dependency:
-
-```bash
-pnpm add @huggingface/transformers
-```
-
-Then point `--backend clip` at any command that measures embeddings:
-
-```bash
-oas ai-audit original.png candidate.png \
-  --backend clip \
-  --model Xenova/clip-vit-base-patch32
-```
-
-A full, real CLIP + EOT run is checked in under
-[`examples/cloak-eot/`](../examples/cloak-eot/README.md).
+A full, real CLIP + EOT run with honest numbers is checked in under
+[`examples/cloak-eot/`](../examples/cloak-eot/README.md), and a reproducible
+watermark audit under [`examples/`](../examples/README.md).
 
 ## 5. Design highlights
 

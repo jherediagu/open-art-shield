@@ -1,8 +1,8 @@
 # Roadmap
 
-OpenArtShield is an experimental toolkit for measuring practical image protection techniques under real-world transformations.
+OpenArtShield is an experimental, honest toolkit for protecting visual work from unauthorized AI use - and measuring what actually holds up.
 
-The project does not aim to make images AI-proof. Its goal is to provide reproducible tools for embedding, extracting, attacking, measuring, and reporting how protection signals behave under realistic conditions.
+The project does not aim to make images AI-proof. Its goal is to give artists and developers reproducible protection layers - watermarking, embedding cloak, provenance - plus the tools to embed, attack, measure, and report how each layer behaves under realistic conditions.
 
 ## Principles
 
@@ -25,12 +25,14 @@ is an experimental signal, not a guarantee:
 - **Poison** - dataset-poisoning experiments. _"Can I make unauthorized training less useful?"_ (research only)
 - **Measure** - robustness, visual quality, and AI-perception (embedding) drift. _"Did any of it actually work?"_ (started)
 
-**Trace** and **Measure** are implemented; **Cloak** has a first experimental
-prototype. The honest current status: OpenArtShield does not yet protect artworks
-from AI training or style mimicry. It embeds/audits watermarks, measures embedding
-drift, and can now generate a measurable (but unproven) embedding perturbation.
-The next step is making that cloak survive transforms (EOT) and using a smarter
-optimizer.
+**Trace** and **Measure** are implemented; **Cloak** has an experimental
+prototype with EOT (Expectation Over Transformation) scoring, demonstrated with a
+real CLIP run in [`examples/cloak-eot/`](examples/cloak-eot/README.md). The honest
+current status: OpenArtShield does not yet protect artworks from AI training or
+style mimicry. It embeds/audits watermarks, measures embedding drift, and can
+generate a measurable (but unproven) embedding perturbation scored through
+transforms. The next steps are measuring whether that drift transfers to other
+embedding models and replacing the random search with a smarter optimizer.
 
 ## v0.1 - Current foundation
 
@@ -112,7 +114,8 @@ Planned improvements:
 
 - Add a first experimental embedding cloak. _(done - `oas cloak`, seeded random search, mock + clip backends)_
 - Add perturbation quality guardrails (PSNR/SSIM). _(done)_
-- Add EOT-based robustness: optimize the cloak _through_ JPEG/resize/blur/screenshot transforms. _(next)_
+- Add EOT-based robustness: score the cloak _through_ JPEG/resize/blur/screenshot transforms. _(done - `oas cloak --eot`, see [`examples/cloak-eot/`](examples/cloak-eot/README.md))_
+- Measure whether cloak drift transfers to other embedding models (avoid overfitting to one CLIP variant).
 - Replace random search with a smarter optimizer.
 - Study Glaze/Mist-style research directions.
 - Add benchmark datasets where licensing allows.

@@ -1,14 +1,20 @@
 # OpenArtShield
 
-> An experimental TypeScript SDK for measuring practical image protection techniques under real-world transformations.
+> An experimental, honest toolkit for protecting visual work from unauthorized AI use - and measuring what actually holds up.
 
-OpenArtShield is a TypeScript-first, open-source SDK and CLI for experimenting with practical image protection workflows: invisible watermarking, robustness benchmarking, and reproducible image-transformation audits. It is built to help you **measure** how a protection technique survives realistic degradations - JPEG compression, resizing, cropping, blur, color changes, and screenshot-like re-uploads - rather than to make grand claims about defeating AI.
+OpenArtShield is a TypeScript-first, open-source SDK and CLI for artists and
+developers who want to **experiment with practical protection layers** against
+unauthorized AI use of images: training, style mimicry, and scraping. Instead of
+promising to make art "AI-proof", it does three things and is honest about all of
+them: it **applies** real protection techniques (watermarking, embedding cloak),
+it **measures** how they survive real-world handling, and it **reports** the
+results so you can see what each technique actually does.
 
 **OpenArtShield does not make images AI-proof.**
 
-**v0.1 is focused on invisible watermarking and robustness audits.**
+**It does not prevent AI training or guarantee protection from style mimicry.**
 
-**All results should be interpreted as experimental.**
+**Every result is experimental and meant to be measured, not trusted blindly.**
 
 > **Status:** early/experimental (v0.1). I started this because most "protect your
 > art from AI" tooling either overpromises or gives you no way to actually check
@@ -26,14 +32,73 @@ OpenArtShield is a TypeScript-first, open-source SDK and CLI for experimenting w
 
 ---
 
+## Why this exists
+
+Most "protect your art from AI" tooling sits at one of two extremes: vague
+promises with no way to check them, or strong claims - "AI-proof", "blocks
+training" - that don't survive scrutiny. OpenArtShield takes the opposite
+approach: **measurable, reproducible, honest experiments.** The goal is a
+practical SDK and research harness for **comparing protection layers** under
+realistic conditions, so artists and developers can see what a technique actually
+does instead of taking a marketing claim on faith.
+
+---
+
+## The protection layers
+
+OpenArtShield models artist protection as a stack of independent, measurable
+layers. Each is a separate concern with its own command; you can use one, some, or
+all of them. None is a guarantee - the value is in being able to measure each one.
+
+| Layer       | What it does                                                                               | Today                                      | Status                   |
+| ----------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ | ------------------------ |
+| **Trace**   | Embed an invisible watermark + sidecar so you can later show a file is yours               | `oas embed` / `oas verify` / `oas protect` | ✅ implemented           |
+| **Measure** | Quantify how a model "sees" an image via CLIP embedding drift                              | `oas ai-audit`                             | ✅ implemented           |
+| **Cloak**   | Experimental perturbation that shifts model-facing embeddings while staying visually close | `oas cloak` (with EOT scoring)             | 🧪 experimental          |
+| **Audit**   | Run real-world transforms (JPEG, resize, crop, blur, screenshot) and report what survives  | `oas audit`                                | ✅ implemented           |
+| **Declare** | Attach provenance / licensing intent (e.g. "no AI training")                               | -                                          | ⏳ future                |
+| **Poison**  | Data-poisoning techniques against training pipelines                                       | -                                          | 🔬 research-only, future |
+
+**Trace** and **Declare** make ownership and intent legible. **Cloak** and
+**Poison** try to interfere with how models perceive or learn from an image.
+**Measure** and **Audit** exist to tell you, with numbers, how well any of it is
+actually holding up.
+
+---
+
 ## What does it do?
 
-OpenArtShield embeds an invisible watermark, runs realistic transformations, then
-reports whether the signal survived.
+The two working layers you can run end-to-end today are **Trace** (watermark) and
+**Audit** (robustness). OpenArtShield embeds an invisible watermark, runs
+realistic transformations, then reports whether the signal survived:
 
 ```
 Original image -> Protected image -> Transform suite -> Extraction -> Metrics -> JSON/HTML report
 ```
+
+## For developers
+
+The research complexity - DCT coefficients, CLIP embeddings, EOT scoring - stays
+behind small, composable commands and a pure TypeScript SDK. Today you compose the
+layers explicitly:
+
+```bash
+# Trace + Audit in one shot: protected image + audit report + sidecar
+oas protect artwork.png --message "artist=jane;license=no-ai-training" --out artwork.protected.png
+
+# Verify the watermark later, straight from its sidecar
+oas verify artwork.protected.png
+
+# Cloak (experimental) + an independent embedding-drift measurement
+oas cloak artwork.png --backend clip --eot standard --out artwork.cloaked.png --report cloak.json
+oas ai-audit artwork.png artwork.cloaked.png --backend clip --out ai-audit.json
+```
+
+The direction is a single entry point where a developer passes one image and gets
+back a **protected image, sidecar metadata, an audit report, an optional cloak
+report, and a verification workflow** - without having to understand the research
+underneath. `oas protect` is the first step toward that unified surface; the cloak
+and declare layers are designed to fold in behind the same simple API.
 
 ## Example audit
 
@@ -86,16 +151,16 @@ and how to reproduce it. An HTML version of this report is produced by
 
 ## What this project is
 
-- A **composable SDK** for embedding and extracting invisible, DCT-based watermarks.
-- A **robustness harness** that applies deterministic image transformations and measures how well a watermark survives them.
-- A **reproducible audit tool** that produces machine-readable JSON reports.
+- A **composable SDK** for the protection layers above: invisible DCT watermarking, verify/sidecar, embedding cloak, and CLIP-based measurement.
+- A **robustness harness** that applies deterministic image transformations and measures how well a protection signal survives them.
+- A **reproducible audit tool** that produces machine-readable JSON (and HTML) reports.
 - A clean, **TypeScript-first** monorepo with a pure core, a Node image-IO layer, and a CLI.
 
 ## What this project is _not_
 
 - It is **not** a tool that prevents AI models from understanding, copying, or training on images.
-- It does **not** implement Glaze, Nightshade, C2PA signing, CLIP evaluation, diffusion-model attacks, or adversarial perturbation baselines.
-- It does **not** guarantee that a watermark survives any particular transformation - measuring that is precisely the point.
+- It does **not** reproduce Glaze, Nightshade, C2PA signing, diffusion-model attacks, or any published adversarial-perturbation system. The `ai-audit` (CLIP) and `cloak` layers are small, original, experimental measurements - not implementations of those papers.
+- It does **not** guarantee that a watermark or cloak survives any particular transformation - measuring that is precisely the point.
 - It makes **no security or legal guarantees**. A watermark is a signal, not a lock.
 
 ---
@@ -445,6 +510,12 @@ cloak flow with a real CLIP backend and EOT robustness, under
 visually-bounded perturbation that increases CLIP embedding drift; it should look
 essentially identical to the original.
 
+Position it correctly: this is an **experimental example of the Cloak and Measure
+layers working together**, nothing more. It demonstrates that a near-invisible
+perturbation can produce _measurable_ CLIP embedding drift. It does **not** prove
+the image is protected, it does **not** prevent training, and it is **not** Glaze,
+Nightshade, or AI-proof.
+
 | Original                                            | Cloaked                                           |
 | --------------------------------------------------- | ------------------------------------------------- |
 | ![Original](examples/cloak-eot/images/original.png) | ![Cloaked](examples/cloak-eot/images/cloaked.png) |
@@ -459,6 +530,10 @@ Real numbers from
 | EOT mode | `standard` (11 variants)       |     | Average EOT drift           | 0.0680 |
 | PSNR     | 40.73 dB                       |     | Minimum EOT drift           | 0.0416 |
 | SSIM     | 0.9821                         |     | Mean drift after transforms | 0.0638 |
+
+`eot.averageDrift` is the score optimized during candidate search;
+`robustness.averageDriftAfterTransforms` is an independent post-hoc check over the
+full transform suite.
 
 Reproduce it (the CLIP backend is an optional dependency, not required for CI):
 
@@ -664,33 +739,29 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 
 ---
 
-## What is useful today?
+## Current status
 
-OpenArtShield is currently useful as:
+**Working today:**
 
-- a TypeScript SDK for experimenting with invisible watermarking;
-- a CLI for embedding and extracting DCT-based watermarks;
-- a robustness harness for testing common image transformations;
-- a reproducible way to compare watermark survival across JPEG compression, resizing, cropping, blur, color changes, and screenshot-like processing;
-- a reporting tool for producing JSON and HTML audit artifacts.
+- invisible watermarking (DCT);
+- verify + sidecar metadata;
+- robustness audits across real-world transforms;
+- CLIP-based `ai-audit` (embedding drift between two images);
+- experimental embedding cloak;
+- EOT scoring (cloak robustness across transformations).
 
-It is not yet a consumer-grade protection app for artists. The current focus is measurement, reproducibility, and developer ergonomics.
+**Not solved (and not claimed):**
 
-## What is not solved?
+- guaranteed prevention of AI training;
+- guaranteed protection from style mimicry;
+- universal robustness across arbitrary pipelines and motivated adversaries;
+- legal enforcement or proof of ownership on its own;
+- provenance / C2PA;
+- poisoning.
 
-OpenArtShield does **not** currently solve:
-
-- preventing AI training;
-- preventing copying;
-- preventing screenshots;
-- surviving arbitrary social media pipelines;
-- defeating motivated adversaries;
-- legal enforcement;
-- proving ownership by itself;
-- replacing provenance standards such as C2PA;
-- implementing Glaze, Nightshade, or other adversarial perturbation systems.
-
-A watermark is a signal, not a lock.
+It is not yet a consumer-grade protection app for artists - the current focus is
+measurement, reproducibility, and developer ergonomics. A watermark is a signal,
+not a lock; a cloak is a measured perturbation, not a guarantee.
 
 ---
 

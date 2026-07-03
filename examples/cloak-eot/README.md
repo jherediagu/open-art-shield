@@ -89,6 +89,10 @@ invisible (PSNR around 40.7 dB, SSIM around 0.98), and about `0.06` of that drif
 still survived the transform suite. The minimum EOT drift (about `0.042`) is the
 worst single transformed variant - the honest floor, not the headline number.
 
+Note the two similar-sounding averages in the JSON: `eot.averageDrift` is the
+score optimized during candidate search; `robustness.averageDriftAfterTransforms`
+is an independent post-hoc check over the full transform suite.
+
 ## How to reproduce
 
 From the repository root, after `pnpm install`:
