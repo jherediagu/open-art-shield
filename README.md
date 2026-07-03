@@ -50,14 +50,14 @@ OpenArtShield models artist protection as a stack of independent, measurable
 layers. Each is a separate concern with its own command; you can use one, some, or
 all of them. None is a guarantee - the value is in being able to measure each one.
 
-| Layer       | What it does                                                                               | Today                                      | Status                   |
-| ----------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ | ------------------------ |
-| **Trace**   | Embed an invisible watermark + sidecar so you can later show a file is yours               | `oas embed` / `oas verify` / `oas protect` | ✅ implemented           |
-| **Measure** | Quantify how a model "sees" an image via CLIP embedding drift                              | `oas ai-audit`                             | ✅ implemented           |
-| **Cloak**   | Experimental perturbation that shifts model-facing embeddings while staying visually close | `oas cloak` (with EOT scoring)             | 🧪 experimental          |
-| **Audit**   | Run real-world transforms (JPEG, resize, crop, blur, screenshot) and report what survives  | `oas audit`                                | ✅ implemented           |
-| **Declare** | Attach provenance / licensing intent (e.g. "no AI training")                               | -                                          | ⏳ future                |
-| **Poison**  | Data-poisoning techniques against training pipelines                                       | -                                          | 🔬 research-only, future |
+| Layer       | What it does                                                                               | Today                                      | Status                |
+| ----------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ | --------------------- |
+| **Trace**   | Embed an invisible watermark + sidecar so you can later show a file is yours               | `oas embed` / `oas verify` / `oas protect` | implemented           |
+| **Measure** | Quantify how a model "sees" an image via CLIP embedding drift                              | `oas ai-audit`                             | implemented           |
+| **Cloak**   | Experimental perturbation that shifts model-facing embeddings while staying visually close | `oas cloak` (with EOT scoring)             | experimental          |
+| **Audit**   | Run real-world transforms (JPEG, resize, crop, blur, screenshot) and report what survives  | `oas audit`                                | implemented           |
+| **Declare** | Attach provenance / licensing intent (e.g. "no AI training")                               | -                                          | future                |
+| **Poison**  | Data-poisoning techniques against training pipelines                                       | -                                          | research-only, future |
 
 **Trace** and **Declare** make ownership and intent legible. **Cloak** and
 **Poison** try to interfere with how models perceive or learn from an image.
