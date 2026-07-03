@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { cosineSimilarity, euclideanDistance, embeddingDrift } from "../src/ai/metrics.js";
 import { createMockEmbeddingBackend } from "../src/ai/mock-backend.js";
 import { runEmbeddingAudit } from "../src/ai/runner.js";
+import { serializeEmbeddingReport, renderEmbeddingHtmlReport } from "../src/ai/report.js";
+import { buildTransferComparison, buildTransferReport, transferRatio } from "../src/ai/transfer.js";
 import { clampByte } from "../src/utils/math.js";
 import type { ImageTransform } from "../src/audit/types.js";
 import { createSyntheticImage } from "./helpers.js";
@@ -113,5 +115,109 @@ describe("runEmbeddingAudit", () => {
     expect(report.prompt?.text).toBe("an illustration");
     // identical images => same similarity to the prompt => delta 0
     expect(report.prompt?.delta).toBeCloseTo(0, 10);
+  });
+});
+
+describe("transfer measurement", () => {
+  const backend = createMockEmbeddingBackend();
+
+  it("computes the transfer ratio and returns null when primary drift is zero", () => {
+    expect(transferRatio(0.1, 0.08)).toBeCloseTo(0.8, 10);
+    expect(transferRatio(0.1, 0)).toBe(0);
+    expect(transferRatio(0, 0.05)).toBeNull();
+    expect(transferRatio(0, 0)).toBeNull();
+  });
+
+  it("builds a comparison from an embedding pair", () => {
+    const original = [1, 0, 0];
+    const candidate = [0, 1, 0]; // orthogonal => cosine 0, drift 1
+    const c = buildTransferComparison("model-b", original, candidate, 0.5);
+    expect(c.model).toBe("model-b");
+    expect(c.cosineSimilarity).toBeCloseTo(0, 10);
+    expect(c.drift).toBeCloseTo(1, 10);
+    expect(c.transferRatio).toBeCloseTo(2, 10);
+  });
+
+  it("builds a transfer report with average and minimum drift", () => {
+    const comparisons = [
+      buildTransferComparison("m1", [1, 0], [1, 0], 0.1), // drift 0
+      buildTransferComparison("m2", [1, 0], [0, 1], 0.1), // drift 1
+    ];
+    const t = buildTransferReport("primary-model", 0.1, comparisons);
+    expect(t.primaryModel).toBe("primary-model");
+    expect(t.summary.primaryDrift).toBe(0.1);
+    expect(t.summary.averageTransferDrift).toBeCloseTo(0.5, 10);
+    expect(t.summary.minimumTransferDrift).toBeCloseTo(0, 10);
+    expect(t.limitations.length).toBeGreaterThan(0);
+    expect(t.limitations.join(" ")).toContain("does not prove protection");
+  });
+
+  it("serializes an embedding report with a transfer block", async () => {
+    const a = createSyntheticImage(96, 96, 3, 1);
+    const b = createSyntheticImage(96, 96, 3, 999);
+    const report = await runEmbeddingAudit(backend, a, b);
+
+    // Simulate a comparison model using deterministic mock embeddings.
+    const originalEmbedding = backend.embedImage(a) as number[];
+    const candidateEmbedding = backend.embedImage(b) as number[];
+    report.transfer = buildTransferReport("mock-primary", report.embedding.drift, [
+      buildTransferComparison(
+        "mock-compare",
+        originalEmbedding,
+        candidateEmbedding,
+        report.embedding.drift,
+      ),
+    ]);
+
+    const json = JSON.parse(serializeEmbeddingReport(report));
+    expect(json.version).toBe("0.2.0");
+    expect(json.transfer.primaryModel).toBe("mock-primary");
+    expect(json.transfer.comparisons).toHaveLength(1);
+    expect(json.transfer.comparisons[0].model).toBe("mock-compare");
+    // Same backend on both sides => identical drift => ratio 1.
+    expect(json.transfer.comparisons[0].transferRatio).toBeCloseTo(1, 10);
+    expect(json.transfer.summary.primaryDrift).toBeCloseTo(
+      json.transfer.summary.averageTransferDrift,
+      10,
+    );
+    expect(Array.isArray(json.transfer.limitations)).toBe(true);
+  });
+
+  it("renders a transfer section in the HTML report only when present", async () => {
+    const a = createSyntheticImage(96, 96, 3, 1);
+    const b = createSyntheticImage(96, 96, 3, 999);
+    const report = await runEmbeddingAudit(backend, a, b);
+
+    const withoutTransfer = renderEmbeddingHtmlReport(report);
+    expect(withoutTransfer).not.toContain("Transfer across models");
+
+    report.transfer = buildTransferReport("mock-primary", report.embedding.drift, [
+      buildTransferComparison(
+        "mock-compare",
+        backend.embedImage(a) as number[],
+        backend.embedImage(b) as number[],
+        report.embedding.drift,
+      ),
+    ]);
+    const withTransfer = renderEmbeddingHtmlReport(report);
+    expect(withTransfer).toContain("Transfer across models");
+    expect(withTransfer).toContain("mock-compare");
+    expect(withTransfer).toContain("Transfer ratio");
+  });
+
+  it("renders a dash for a null transfer ratio in HTML", async () => {
+    const img = createSyntheticImage(96, 96, 3, 5);
+    // Identical images => primary drift 0 => null ratio.
+    const report = await runEmbeddingAudit(backend, img, img);
+    report.transfer = buildTransferReport("mock-primary", report.embedding.drift, [
+      buildTransferComparison(
+        "mock-compare",
+        backend.embedImage(img) as number[],
+        backend.embedImage(img) as number[],
+        report.embedding.drift,
+      ),
+    ]);
+    expect(report.transfer.comparisons[0].transferRatio).toBeNull();
+    expect(renderEmbeddingHtmlReport(report)).toContain("&mdash;");
   });
 });

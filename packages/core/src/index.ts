@@ -71,6 +71,13 @@ export type {
   EmbeddingAuditReport,
   TransformDriftResult,
 } from "./ai/types.js";
+export {
+  TRANSFER_LIMITATIONS,
+  transferRatio,
+  buildTransferComparison,
+  buildTransferReport,
+} from "./ai/transfer.js";
+export type { TransferComparison, TransferSummary, TransferReport } from "./ai/transfer.js";
 
 // Experimental embedding cloak (runCloak etc. are on the SDK surface above).
 export {

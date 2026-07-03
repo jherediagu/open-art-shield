@@ -13,6 +13,7 @@ import { runCapacity } from "../src/commands/capacity.js";
 import { runProtect } from "../src/commands/protect.js";
 import { runVerify } from "../src/commands/verify.js";
 import { getVersion, versionCommand } from "../src/commands/version.js";
+import { buildCli } from "../src/index.js";
 import { CLI_VERSION } from "../src/utils/output.js";
 import { createSyntheticImage } from "./helpers.js";
 
@@ -178,6 +179,49 @@ describe("oas ai-audit", () => {
     await expect(
       runAiAudit({ original: inputPath, candidate: inputPath, backend: "gpt" }),
     ).rejects.toThrow(/backend/i);
+  });
+
+  it("parses a repeatable --compare-model option", () => {
+    const cli = buildCli();
+    cli.parse(
+      [
+        "node",
+        "oas",
+        "ai-audit",
+        "a.png",
+        "b.png",
+        "--backend",
+        "clip",
+        "--compare-model",
+        "model-a",
+        "--compare-model",
+        "model-b",
+      ],
+      { run: false },
+    );
+    expect(cli.options.compareModel).toEqual(["model-a", "model-b"]);
+  });
+
+  it("rejects --compare-model when the backend is not clip", async () => {
+    await expect(
+      runAiAudit({
+        original: inputPath,
+        candidate: inputPath,
+        backend: "mock",
+        compareModels: ["Xenova/clip-vit-base-patch16"],
+      }),
+    ).rejects.toThrow(/--compare-model requires --backend clip/);
+  });
+
+  it("fails clearly when --compare-model needs the missing optional dependency", async () => {
+    await expect(
+      runAiAudit({
+        original: inputPath,
+        candidate: inputPath,
+        backend: "clip",
+        compareModels: ["Xenova/clip-vit-base-patch16"],
+      }),
+    ).rejects.toThrow(/@huggingface\/transformers/);
   });
 });
 

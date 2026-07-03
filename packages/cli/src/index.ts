@@ -49,6 +49,19 @@ function requiredString(value: unknown, flag: string): string {
   return value;
 }
 
+// A repeatable string option: cac gives a string for one occurrence and an
+// array for several. Normalize to string[] (or undefined when absent).
+function optionalStringList(value: unknown, flag: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  const values = Array.isArray(value) ? value : [value];
+  return values.map((v) => {
+    if (typeof v !== "string" || v.length === 0) {
+      throw new CliError(`${flag} expects a non-empty value, received "${String(v)}".`);
+    }
+    return v;
+  });
+}
+
 // Wire up the `oas` program. Kept separate from run() so tests can build it
 // without actually executing anything.
 export function buildCli() {
@@ -118,16 +131,24 @@ export function buildCli() {
     .command("ai-audit <original> <candidate>", "Measure embedding drift between two images")
     .option("--backend <id>", 'Embedding backend: "mock" (default) or "clip"')
     .option("--model <id>", "Model id for the clip backend (default Xenova/clip-vit-base-patch32)")
+    .option(
+      "--compare-model <id>",
+      "Also measure drift on this model (repeatable; requires --backend clip)",
+    )
     .option("--prompt <text>", "Optional prompt for image<->text drift")
     .option("--out <path>", "Path to write the JSON report")
     .option("--html <path>", "Also write a standalone HTML report")
     .example("  oas ai-audit original.png protected.png --out ai-audit.json --html ai-audit.html")
+    .example(
+      "  oas ai-audit original.png cloaked.png --backend clip --compare-model Xenova/clip-vit-base-patch16 --out transfer.json",
+    )
     .action(async (original: string, candidate: string, options: Record<string, unknown>) => {
       await aiAuditCommand({
         original,
         candidate,
         backend: typeof options.backend === "string" ? options.backend : undefined,
         model: typeof options.model === "string" ? options.model : undefined,
+        compareModels: optionalStringList(options.compareModel, "--compare-model"),
         prompt: typeof options.prompt === "string" ? options.prompt : undefined,
         out: typeof options.out === "string" ? options.out : undefined,
         html: typeof options.html === "string" ? options.html : undefined,

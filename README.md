@@ -385,6 +385,31 @@ There are two backends:
   command fails with a clear message. CI and the test suite always use the `mock`
   backend; the `clip` backend was verified to run locally but is experimental.
 
+#### Transfer measurement
+
+`oas ai-audit` can compare drift across a primary model and one or more comparison
+models. This helps detect whether a cloak effect transfers beyond the model it was
+measured against - a cloak that only moves one CLIP variant's embedding is much
+weaker evidence than one whose drift shows up on other models too.
+
+```bash
+oas ai-audit original.png cloaked.png \
+  --backend clip \
+  --model Xenova/clip-vit-base-patch32 \
+  --compare-model Xenova/clip-vit-base-patch16 \
+  --out ai-audit-transfer.json \
+  --html ai-audit-transfer.html
+```
+
+`--compare-model` is repeatable and requires `--backend clip`. The report gains a
+`transfer` block with per-model drift and a transfer ratio
+(`comparison drift / primary drift`; null when the primary drift is zero). A
+comparison model that fails to load fails the run - nothing is silently skipped.
+
+Transfer measurement does not prove protection. It only measures whether drift
+appears across the selected embedding models, and CLIP-family transfer is only a
+proxy for broader model behavior.
+
 > **Caveats.** The `mock` backend does not represent how real AI systems see
 > images. CLIP is only one proxy for image-text embedding behavior; it does not
 > represent all diffusion models or training pipelines. Embedding drift is a
