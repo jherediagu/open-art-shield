@@ -1,6 +1,8 @@
 import type { PixelImage } from "../types.js";
 import type { ImageTransform } from "../audit/types.js";
+import type { EmbeddingBackend } from "../ai/types.js";
 import type { EotMode } from "./eot.js";
+import type { CloakModelScore } from "./scoring.js";
 
 // Experimental embedding cloak.
 //
@@ -10,7 +12,7 @@ import type { EotMode } from "./eot.js";
 // transform suite. A higher drift score only means the selected backend changed
 // more under the measured conditions - nothing more.
 
-export const CLOAK_REPORT_VERSION = "0.2.0";
+export const CLOAK_REPORT_VERSION = "0.3.0";
 
 export const DEFAULT_CLOAK_STRENGTH = 4;
 export const DEFAULT_CLOAK_STEPS = 8;
@@ -50,6 +52,12 @@ export type CloakConfig = {
    * always scored, so this excludes it. Empty = clean-only scoring.
    */
   eotTransforms?: ImageTransform[];
+  /**
+   * Additional embedding backends used to score candidates (multi-model
+   * scoring). The primary backend always scores; these are extra. Injected as
+   * instances so core stays free of model loading.
+   */
+  scoreBackends?: EmbeddingBackend[];
   inputPath?: string;
   outputPath?: string;
 };
@@ -86,14 +94,31 @@ export type CloakReport = {
     mode: EotMode;
     /** Scoring variants used, e.g. ["clean", "jpeg_quality_95", ...]. */
     transforms: string[];
-    /** Embedding drift of the chosen image on the clean pixels. */
+    /** Embedding drift of the chosen image on the clean pixels (primary model). */
     cleanDrift: number;
-    /** Average embedding drift across all scoring variants (the search score). */
+    /** Average embedding drift across all scoring variants (primary model). */
     averageDrift: number;
-    /** Minimum embedding drift across all scoring variants (worst-case survival). */
+    /** Minimum embedding drift across all scoring variants (primary model). */
     minDrift: number;
-    /** Total embedding backend evaluations performed during the run. */
+    /** Total embedding backend evaluations performed during the run (all models). */
     embeddingEvaluations: number;
+  };
+  /**
+   * Multi-model scoring summary for the chosen image. With no extra score
+   * backends the mode is "single-model" and the aggregate equals the primary
+   * model's average EOT drift.
+   */
+  scoring: {
+    mode: "single-model" | "multi-model";
+    primaryModel: string;
+    /** Extra scoring models beyond the primary. */
+    scoreModels: string[];
+    /** Per-model drift stats for the chosen image (primary model first). */
+    models: CloakModelScore[];
+    /** The search objective: mean of the per-model average EOT drifts. */
+    aggregateAverageDrift: number;
+    /** The weakest model's average EOT drift - the honest floor across models. */
+    aggregateMinModelDrift: number;
   };
   robustness: {
     transformsTested: number;

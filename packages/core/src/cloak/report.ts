@@ -18,8 +18,19 @@ function fmt(value: number | null, digits = 4): string {
 
 /** Render a cloak report as a standalone HTML page. */
 export function renderCloakHtmlReport(report: CloakReport): string {
-  const { input, output, backend, parameters, result, eot, robustness } = report;
+  const { input, output, backend, parameters, result, eot, scoring, robustness } = report;
   const limitations = report.limitations.map((l) => `      <li>${escapeHtml(l)}</li>`).join("\n");
+
+  const scoringRows = scoring.models
+    .map(
+      (m) => `      <tr>
+        <td><code>${escapeHtml(m.model)}</code></td>
+        <td class="num">${m.cleanDrift.toFixed(4)}</td>
+        <td class="num">${m.averageEotDrift.toFixed(4)}</td>
+        <td class="num">${m.minEotDrift.toFixed(4)}</td>
+      </tr>`,
+    )
+    .join("\n");
 
   return `<!doctype html>
 <html lang="en">
@@ -39,6 +50,11 @@ export function renderCloakHtmlReport(report: CloakReport): string {
   .meta div { font-size: 0.9rem; }
   .meta b { display: block; color: #777; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
+  h2 { font-size: 1.1rem; margin-top: 2rem; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  th, td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #8883; text-align: left; }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: #777; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .note { margin-top: 1.5rem; padding: 0.75rem 1rem; border-left: 3px solid #f0ad4e; background: #f0ad4e1a; font-size: 0.88rem; }
   .note ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
   footer { margin-top: 2rem; color: #888; font-size: 0.8rem; }
@@ -72,6 +88,31 @@ export function renderCloakHtmlReport(report: CloakReport): string {
     <div><b>EOT transforms</b>${eot.transforms.map((t) => `<code>${escapeHtml(t)}</code>`).join(", ")}</div>
     <div><b>Mean drift after transforms</b>${robustness.averageDriftAfterTransforms.toFixed(4)} (${robustness.transformsTested})</div>
   </div>
+
+  <h2>Model scoring (${escapeHtml(scoring.mode)})</h2>
+  <div class="meta">
+    <div><b>Primary model</b><code>${escapeHtml(scoring.primaryModel)}</code></div>
+    <div><b>Score models</b>${
+      scoring.scoreModels.length > 0
+        ? scoring.scoreModels.map((m) => `<code>${escapeHtml(m)}</code>`).join(", ")
+        : "(none)"
+    }</div>
+    <div><b>Aggregate average drift</b>${scoring.aggregateAverageDrift.toFixed(4)}</div>
+    <div><b>Weakest model drift</b>${scoring.aggregateMinModelDrift.toFixed(4)}</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th class="num">Clean drift</th>
+        <th class="num">Avg EOT drift</th>
+        <th class="num">Min EOT drift</th>
+      </tr>
+    </thead>
+    <tbody>
+${scoringRows}
+    </tbody>
+  </table>
 
   <div class="note">
     <strong>Limitations</strong>

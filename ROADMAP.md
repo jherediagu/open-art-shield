@@ -117,6 +117,7 @@ Planned improvements:
 - Add perturbation quality guardrails (PSNR/SSIM). _(done)_
 - Add EOT-based robustness: score the cloak _through_ JPEG/resize/blur/screenshot transforms. _(done - `oas cloak --eot`, see [`examples/cloak-eot/`](examples/cloak-eot/README.md))_
 - Measure whether cloak drift transfers to other embedding models (avoid overfitting to one CLIP variant). _(done - `oas ai-audit --compare-model`)_
+- Score cloak candidates across multiple embedding models during the search. _(done - `oas cloak --score-model`)_
 - Replace random search with a smarter optimizer.
 - Study Glaze/Mist-style research directions.
 - Add benchmark datasets where licensing allows.

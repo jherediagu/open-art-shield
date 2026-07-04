@@ -210,11 +210,18 @@ export function buildCli() {
       "Reject candidates whose SSIM drops more than this (default 0.02)",
     )
     .option("--eot <mode>", 'EOT robustness mode: "none" (default), "mild", or "standard"')
+    .option(
+      "--score-model <id>",
+      "Also score candidates on this model (repeatable; mock backend uses deterministic variants)",
+    )
     .option("--out <path>", "Output path for the cloaked image")
     .option("--report <path>", "Path to write the JSON cloak report")
     .option("--html <path>", "Also write a standalone HTML report")
     .example(
       "  oas cloak artwork.png --backend clip --strength 4 --steps 12 --eot standard --out artwork.cloaked.png --report cloak.json",
+    )
+    .example(
+      "  oas cloak artwork.png --backend clip --score-model Xenova/clip-vit-base-patch16 --eot standard --out artwork.cloaked.png",
     )
     .action(async (input: string, options: Record<string, unknown>) => {
       await cloakCommand({
@@ -222,6 +229,7 @@ export function buildCli() {
         out: requiredString(options.out, "--out"),
         backend: typeof options.backend === "string" ? options.backend : undefined,
         model: typeof options.model === "string" ? options.model : undefined,
+        scoreModels: optionalStringList(options.scoreModel, "--score-model"),
         strength: optionalNumber(options.strength, "--strength"),
         steps: optionalInt(options.steps, "--steps"),
         seed: optionalInt(options.seed, "--seed"),

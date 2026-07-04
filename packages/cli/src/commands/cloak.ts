@@ -1,13 +1,21 @@
 import { writeFile } from "node:fs/promises";
 import {
+  createMockEmbeddingBackend,
   EOT_TRANSFORM_NAMES,
   renderCloakHtmlReport,
   resolveEotMode,
   runCloak,
   serializeCloakReport,
   type CloakReport,
+  type EmbeddingBackend,
 } from "@openartshield/core";
-import { defaultTransforms, readImage, selectTransforms, writeImage } from "@openartshield/node";
+import {
+  createTransformersEmbeddingBackend,
+  defaultTransforms,
+  readImage,
+  selectTransforms,
+  writeImage,
+} from "@openartshield/node";
 import { resolveEmbeddingBackend } from "../utils/backend.js";
 import { failure, info, success } from "../utils/output.js";
 
@@ -16,6 +24,13 @@ export type CloakOptions = {
   out: string;
   backend?: string;
   model?: string;
+  /**
+   * Additional models used to score candidates (multi-model scoring). With the
+   * clip backend each id loads another CLIP model (lazy, optional dependency);
+   * with the mock backend each id creates a deterministic mock variant so the
+   * flow can run in CI without model weights.
+   */
+  scoreModels?: string[];
   strength?: number;
   steps?: number;
   seed?: number;
@@ -40,12 +55,23 @@ export async function runCloakCommand(options: CloakOptions): Promise<CloakRunRe
   // Resolve the EOT mode to its transform set (throws clearly on an unknown mode).
   const eotMode = resolveEotMode(options.eot ?? "none");
   const eotTransforms = selectTransforms([...EOT_TRANSFORM_NAMES[eotMode]]);
+
+  // Extra scoring models: real CLIP backends for clip, deterministic mock
+  // variants for mock (so CI can exercise multi-model scoring without weights).
+  const backendId = options.backend ?? "mock";
+  const scoreBackends: EmbeddingBackend[] = (options.scoreModels ?? []).map((scoreModel) =>
+    backendId === "clip" || backendId === "transformers"
+      ? createTransformersEmbeddingBackend({ model: scoreModel })
+      : createMockEmbeddingBackend(scoreModel),
+  );
+
   const image = await readImage(options.input);
 
   const { image: cloaked, report } = await runCloak(backend, image, {
     transforms: defaultTransforms,
     eotMode,
     eotTransforms,
+    scoreBackends,
     inputPath: options.input,
     outputPath: options.out,
     ...(options.strength !== undefined ? { strength: options.strength } : {}),
@@ -80,24 +106,35 @@ export async function cloakCommand(options: CloakOptions): Promise<void> {
   }
 
   const { report, wroteImage } = await runCloakCommand(options);
-  const { result, eot, robustness } = report;
+  const { parameters, result, eot, scoring, robustness } = report;
 
-  info("OpenArtShield cloak (experimental)");
+  info("Experimental cloak");
   info("");
   info(`Input: ${options.input}`);
+  info(`Output: ${options.out}`);
   info(`Backend: ${report.backend.id}`);
-  info(`Initial drift: ${result.initialDrift.toFixed(4)}`);
-  info(`Best drift (clean): ${result.bestDrift.toFixed(4)}`);
-  info(
-    `PSNR: ${result.psnr === null ? "-" : result.psnr.toFixed(2)}  SSIM: ${result.ssim.toFixed(4)}`,
-  );
+  info(`Primary model: ${scoring.primaryModel}`);
+  if (scoring.scoreModels.length > 0) {
+    info(`Score models: ${scoring.scoreModels.join(", ")}`);
+  }
   info(
     `EOT mode: ${eot.mode} (${eot.transforms.length} variant(s), ${eot.embeddingEvaluations} evals)`,
   );
+  info(`Steps: ${parameters.steps}`);
+  info(`Strength: ${parameters.strength}`);
+  info("");
+  info(`Initial drift: ${result.initialDrift.toFixed(4)}`);
+  info(`Best drift (clean, primary): ${result.bestDrift.toFixed(4)}`);
+  info(`Best aggregate drift: ${scoring.aggregateAverageDrift.toFixed(4)}`);
+  info(`Weakest model drift: ${scoring.aggregateMinModelDrift.toFixed(4)}`);
   info(
-    `EOT drift - clean: ${eot.cleanDrift.toFixed(4)}  avg: ${eot.averageDrift.toFixed(4)}  min: ${eot.minDrift.toFixed(4)}`,
+    `EOT drift (primary) - clean: ${eot.cleanDrift.toFixed(4)}  avg: ${eot.averageDrift.toFixed(4)}  min: ${eot.minDrift.toFixed(4)}`,
+  );
+  info(
+    `PSNR: ${result.psnr === null ? "-" : result.psnr.toFixed(2)}  SSIM: ${result.ssim.toFixed(4)}`,
   );
   info(`Mean drift after transforms: ${robustness.averageDriftAfterTransforms.toFixed(4)}`);
+  info("");
   if (options.report) info(`Report: ${options.report}`);
   if (options.html) info(`HTML report: ${options.html}`);
 

@@ -354,10 +354,13 @@ describe("oas cloak", () => {
     expect(await exists(out)).toBe(true);
 
     const onDisk = JSON.parse(await readFile(reportPath, "utf-8"));
-    expect(onDisk.version).toBe("0.2.0");
+    expect(onDisk.version).toBe("0.3.0");
     expect(Array.isArray(onDisk.limitations)).toBe(true);
     // Default run uses EOT mode "none" (clean-only scoring).
     expect(onDisk.eot.mode).toBe("none");
+    // And single-model scoring (no --score-model given).
+    expect(onDisk.scoring.mode).toBe("single-model");
+    expect(onDisk.scoring.scoreModels).toEqual([]);
     expect(onDisk.eot.transforms).toEqual(["clean"]);
     expect((await readFile(htmlPath, "utf-8")).startsWith("<!doctype html>")).toBe(true);
   });
@@ -445,6 +448,84 @@ describe("oas cloak", () => {
   it("fails clearly when --backend clip is selected but the optional dep is missing", async () => {
     await expect(
       runCloakCommand({ input: inputPath, out: join(dir, "x.png"), backend: "clip", steps: 1 }),
+    ).rejects.toThrow(/@huggingface\/transformers/);
+  });
+
+  it("parses a repeatable --score-model option", () => {
+    const cli = buildCli();
+    cli.parse(
+      [
+        "node",
+        "oas",
+        "cloak",
+        "a.png",
+        "--out",
+        "b.png",
+        "--score-model",
+        "model-a",
+        "--score-model",
+        "model-b",
+      ],
+      { run: false },
+    );
+    expect(cli.options.scoreModel).toEqual(["model-a", "model-b"]);
+  });
+
+  it("scores across deterministic mock variants with --score-model (mock backend)", async () => {
+    const out = join(dir, "cloaked-multimodel.png");
+    const reportPath = join(dir, "cloak-multimodel.json");
+    const { report, wroteImage } = await runCloakCommand({
+      input: inputPath,
+      out,
+      backend: "mock",
+      scoreModels: ["variant-a", "variant-b"],
+      strength: 8,
+      steps: 4,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      report: reportPath,
+    });
+
+    expect(wroteImage).toBe(true);
+    expect(report.scoring.mode).toBe("multi-model");
+    expect(report.scoring.primaryModel).toBe("mock");
+    // Mock variants keep their mock: prefix so they are never mistaken for real models.
+    expect(report.scoring.scoreModels).toEqual(["mock:variant-a", "mock:variant-b"]);
+    expect(report.scoring.models).toHaveLength(3);
+    expect(report.scoring.aggregateAverageDrift).toBeGreaterThan(0);
+    expect(report.scoring.aggregateMinModelDrift).toBeGreaterThan(0);
+    expect(report.scoring.aggregateMinModelDrift).toBeLessThanOrEqual(
+      report.scoring.aggregateAverageDrift,
+    );
+
+    const onDisk = JSON.parse(await readFile(reportPath, "utf-8"));
+    expect(onDisk.scoring.mode).toBe("multi-model");
+  });
+
+  it("does not write an image when multi-model scoring finds no improvement", async () => {
+    const out = join(dir, "cloaked-multimodel-noimprove.png");
+    const { report, wroteImage } = await runCloakCommand({
+      input: inputPath,
+      out,
+      backend: "mock",
+      scoreModels: ["variant-a"],
+      strength: 0, // identical candidates => zero drift on every model
+      steps: 3,
+    });
+    expect(wroteImage).toBe(false);
+    expect(report.result.improved).toBe(false);
+    expect(await exists(out)).toBe(false);
+  });
+
+  it("fails clearly when --score-model needs the missing optional dependency (clip)", async () => {
+    await expect(
+      runCloakCommand({
+        input: inputPath,
+        out: join(dir, "x2.png"),
+        backend: "clip",
+        scoreModels: ["Xenova/clip-vit-base-patch16"],
+        steps: 1,
+      }),
     ).rejects.toThrow(/@huggingface\/transformers/);
   });
 });

@@ -3,6 +3,11 @@ import { boundedNoiseCandidate } from "../src/cloak/perturb.js";
 import { runCloak } from "../src/cloak/runner.js";
 import { serializeCloakReport, renderCloakHtmlReport } from "../src/cloak/report.js";
 import { EOT_TRANSFORM_NAMES, eotTransformNames, resolveEotMode } from "../src/cloak/eot.js";
+import {
+  aggregateAverageDrift,
+  aggregateMinModelDrift,
+  type CloakModelScore,
+} from "../src/cloak/scoring.js";
 import { createMockEmbeddingBackend } from "../src/ai/mock-backend.js";
 import { clampByte } from "../src/utils/math.js";
 import type { ImageTransform } from "../src/audit/types.js";
@@ -110,7 +115,7 @@ describe("cloak report", () => {
       maxSsimDrop: 0.5,
     });
     const json = JSON.parse(serializeCloakReport(report));
-    expect(json.version).toBe("0.2.0");
+    expect(json.version).toBe("0.3.0");
     expect(Array.isArray(json.limitations)).toBe(true);
     expect(json.limitations.length).toBeGreaterThan(0);
 
@@ -231,5 +236,147 @@ describe("runCloak EOT scoring", () => {
     const b = await runCloak(backend, img, config);
     expect(serializeCloakReport(a.report)).toBe(serializeCloakReport(b.report));
     expect(Array.from(a.image.data)).toEqual(Array.from(b.image.data));
+  });
+});
+
+describe("mock backend variants", () => {
+  it("keys deterministic distinct variants by id", () => {
+    const base = createMockEmbeddingBackend();
+    const a1 = createMockEmbeddingBackend("model-a");
+    const a2 = createMockEmbeddingBackend("model-a");
+    const b = createMockEmbeddingBackend("model-b");
+    expect(base.id).toBe("mock");
+    expect(a1.id).toBe("mock:model-a");
+    expect(b.id).toBe("mock:model-b");
+
+    const img = createSyntheticImage(64, 64, 3, 3);
+    const ea1 = a1.embedImage(img) as number[];
+    const ea2 = a2.embedImage(img) as number[];
+    const eb = b.embedImage(img) as number[];
+    const ebase = base.embedImage(img) as number[];
+    expect(ea1).toEqual(ea2); // same variant => same embedding
+    expect(ea1).not.toEqual(eb); // different variants disagree
+    expect(ea1).not.toEqual(ebase); // and differ from the base mock
+  });
+});
+
+describe("multi-model scoring aggregates", () => {
+  const score = (model: string, avg: number): CloakModelScore => ({
+    model,
+    cleanDrift: avg,
+    averageEotDrift: avg,
+    minEotDrift: avg,
+  });
+
+  it("averages per-model average EOT drifts", () => {
+    expect(aggregateAverageDrift([score("a", 0.2), score("b", 0.4)])).toBeCloseTo(0.3, 10);
+    expect(aggregateAverageDrift([])).toBe(0);
+  });
+
+  it("reports the weakest model's drift", () => {
+    expect(aggregateMinModelDrift([score("a", 0.2), score("b", 0.4)])).toBeCloseTo(0.2, 10);
+    expect(aggregateMinModelDrift([])).toBe(0);
+  });
+});
+
+describe("runCloak multi-model scoring", () => {
+  const scoreA = createMockEmbeddingBackend("model-a");
+  const scoreB = createMockEmbeddingBackend("model-b");
+
+  it("scores candidates across all models and reports per-model stats", async () => {
+    const img = createSyntheticImage(96, 96, 3, 6);
+    const { report } = await runCloak(backend, img, {
+      strength: 8,
+      steps: 6,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      eotMode: "mild",
+      eotTransforms: [identity, brighten],
+      scoreBackends: [scoreA, scoreB],
+    });
+
+    expect(report.result.improved).toBe(true);
+    expect(report.scoring.mode).toBe("multi-model");
+    expect(report.scoring.primaryModel).toBe("mock");
+    expect(report.scoring.scoreModels).toEqual(["mock:model-a", "mock:model-b"]);
+    expect(report.scoring.models).toHaveLength(3);
+    expect(report.scoring.models[0].model).toBe("mock"); // primary first
+
+    // Aggregate is the mean of the per-model average EOT drifts; the weakest
+    // model is their minimum.
+    const avgs = report.scoring.models.map((m) => m.averageEotDrift);
+    const expectedAggregate = avgs.reduce((a, b) => a + b, 0) / avgs.length;
+    expect(report.scoring.aggregateAverageDrift).toBeCloseTo(expectedAggregate, 10);
+    expect(report.scoring.aggregateMinModelDrift).toBeCloseTo(Math.min(...avgs), 10);
+
+    // The eot block mirrors the primary model's stats.
+    expect(report.eot.cleanDrift).toBe(report.scoring.models[0].cleanDrift);
+    expect(report.eot.averageDrift).toBe(report.scoring.models[0].averageEotDrift);
+  });
+
+  it("is deterministic for identical inputs", async () => {
+    const img = createSyntheticImage(80, 80, 3, 11);
+    const config = {
+      strength: 8,
+      steps: 5,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      scoreBackends: [scoreA, scoreB],
+    };
+    const a = await runCloak(backend, img, config);
+    const b = await runCloak(backend, img, config);
+    expect(serializeCloakReport(a.report)).toBe(serializeCloakReport(b.report));
+    expect(Array.from(a.image.data)).toEqual(Array.from(b.image.data));
+  });
+
+  it("returns the original and reports no improvement when nothing beats the aggregate", async () => {
+    const img = createSyntheticImage(96, 96, 3, 4);
+    const { image, report } = await runCloak(backend, img, {
+      strength: 0, // identical candidates => zero drift on every model
+      steps: 4,
+      scoreBackends: [scoreA, scoreB],
+    });
+    expect(report.result.improved).toBe(false);
+    expect(report.scoring.aggregateAverageDrift).toBe(0);
+    expect(countDifferences(img, image)).toBe(0);
+  });
+
+  it("falls back to single-model scoring with no score backends", async () => {
+    const img = createSyntheticImage(96, 96, 3, 3);
+    const { report } = await runCloak(backend, img, {
+      strength: 8,
+      steps: 4,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+    });
+    expect(report.scoring.mode).toBe("single-model");
+    expect(report.scoring.scoreModels).toEqual([]);
+    expect(report.scoring.models).toHaveLength(1);
+    // With one model the aggregate is that model's average EOT drift.
+    expect(report.scoring.aggregateAverageDrift).toBe(report.eot.averageDrift);
+    expect(report.scoring.aggregateMinModelDrift).toBe(report.eot.averageDrift);
+  });
+
+  it("serializes and renders the multi-model scoring section", async () => {
+    const img = createSyntheticImage(64, 64, 3, 7);
+    const { report } = await runCloak(backend, img, {
+      strength: 8,
+      steps: 4,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      scoreBackends: [scoreA],
+    });
+
+    const json = JSON.parse(serializeCloakReport(report));
+    expect(json.scoring.mode).toBe("multi-model");
+    expect(json.scoring.models).toHaveLength(2);
+    expect(typeof json.scoring.aggregateAverageDrift).toBe("number");
+    expect(typeof json.scoring.aggregateMinModelDrift).toBe("number");
+
+    const html = renderCloakHtmlReport(report);
+    expect(html).toContain("Model scoring (multi-model)");
+    expect(html).toContain("mock:model-a");
+    expect(html).toContain("Weakest model drift");
+    expect(html).toContain("Aggregate average drift");
   });
 });

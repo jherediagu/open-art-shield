@@ -99,3 +99,5 @@ export {
   eotTransformNames,
 } from "./cloak/eot.js";
 export type { EotMode } from "./cloak/eot.js";
+export { aggregateAverageDrift, aggregateMinModelDrift } from "./cloak/scoring.js";
+export type { CloakModelScore } from "./cloak/scoring.js";
