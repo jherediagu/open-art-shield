@@ -477,6 +477,32 @@ EOT makes the search more robust by scoring candidates through transformations,
 but it still **gives no protection guarantees** - a higher averaged drift is a
 measurement under the chosen backend and transforms, not protection from AI.
 
+#### Multi-model cloak scoring (`--score-model`)
+
+`oas cloak` can score candidate perturbations across more than one embedding
+model. This reduces the risk of optimizing only for a single CLIP variant: each
+candidate is scored per model (clean + EOT drift), and the search selects on the
+average across models. The report also shows the weakest model's drift, so a
+cloak that barely moves one model cannot hide behind its average.
+
+```bash
+oas cloak artwork.png \
+  --backend clip \
+  --model Xenova/clip-vit-base-patch32 \
+  --score-model Xenova/clip-vit-base-patch16 \
+  --strength 4 \
+  --steps 12 \
+  --eot standard \
+  --out artwork.cloaked.png \
+  --report artwork.cloak.json
+```
+
+`--score-model` is repeatable. The report gains a `scoring` block with per-model
+drift stats, the aggregate average, and the weakest model's drift. This still
+does not prove protection against AI training or style mimicry - it only means
+the selected perturbation was optimized against the configured scoring models and
+measured under the configured transforms.
+
 It only writes a cloaked image when a candidate actually improved drift within
 the quality limits; otherwise it tells you so and writes nothing misleading. The
 `mock` backend is the default for tests but is **not meaningful** for real

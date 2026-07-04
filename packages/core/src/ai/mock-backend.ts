@@ -64,11 +64,50 @@ function textFeature(text: string): Embedding {
   return l2normalize(vec);
 }
 
-/** Create the deterministic mock embedding backend (id "mock"). */
-export function createMockEmbeddingBackend(): EmbeddingBackend {
+// Deterministic per-dimension weights derived from a variant string. Same FNV-1a
+// + Mulberry32 recipe as textFeature, so a variant is a stable, seedable "model".
+function variantWeights(variant: string): number[] {
+  let state = 2166136261 >>> 0;
+  for (let i = 0; i < variant.length; i++) {
+    state ^= variant.charCodeAt(i);
+    state = Math.imul(state, 16777619) >>> 0;
+  }
+  const weights = new Array<number>(DIM);
+  for (let i = 0; i < DIM; i++) {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    // In [0.25, 1.75]: variants re-weight the feature dimensions differently,
+    // so they disagree about drift the way distinct real models do.
+    weights[i] = 0.25 + (((t ^ (t >>> 14)) >>> 0) / 4294967296) * 1.5;
+  }
+  return weights;
+}
+
+/**
+ * Create the deterministic mock embedding backend.
+ *
+ * With no variant the id is "mock" - the default placeholder. Passing a variant
+ * string creates a distinct deterministic "model" (id "mock:<variant>"): the same
+ * downsampled-luma feature re-weighted by a variant-seeded mask. Variants exist
+ * so multi-model flows (e.g. cloak scoring across models) can be exercised in CI
+ * without model weights; they are no more a perceptual model than the base mock.
+ */
+export function createMockEmbeddingBackend(variant?: string): EmbeddingBackend {
+  if (variant === undefined) {
+    return {
+      id: "mock",
+      embedImage: downsampledLumaFeature,
+      embedText: textFeature,
+    };
+  }
+
+  const weights = variantWeights(variant);
+  const reweight = (vec: Embedding): Embedding => l2normalize(vec.map((v, i) => v * weights[i]));
   return {
-    id: "mock",
-    embedImage: downsampledLumaFeature,
-    embedText: textFeature,
+    id: `mock:${variant}`,
+    embedImage: (image) => reweight(downsampledLumaFeature(image)),
+    embedText: (text) => reweight(textFeature(text)),
   };
 }

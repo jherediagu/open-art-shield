@@ -6,6 +6,7 @@ import type { Embedding, EmbeddingBackend } from "../ai/types.js";
 import type { PixelImage } from "../types.js";
 import { boundedNoiseCandidate } from "./perturb.js";
 import { DEFAULT_EOT_MODE } from "./eot.js";
+import { aggregateAverageDrift, aggregateMinModelDrift, type CloakModelScore } from "./scoring.js";
 import {
   CLOAK_LIMITATIONS,
   CLOAK_REPORT_VERSION,
@@ -18,21 +19,29 @@ import {
   type CloakResult,
 } from "./types.js";
 
+// "transformers:<model>" -> "<model>" for display; mock ids stay verbatim so a
+// mock variant is never mistaken for a real model in the report.
+function modelName(backend: EmbeddingBackend): string {
+  return backend.id.startsWith("transformers:")
+    ? backend.id.slice("transformers:".length)
+    : backend.id;
+}
+
 /**
  * Experimental embedding cloak via simple seeded random search, with optional
- * EOT (Expectation Over Transformation) scoring.
+ * EOT (Expectation Over Transformation) and multi-model scoring.
  *
  * For each step it generates a bounded-noise candidate and rejects it if it
  * breaks the visual quality guardrails (PSNR/SSIM) - that check happens before
- * any embedding work. Surviving candidates are scored: with EOT disabled the
- * score is the embedding drift of the clean candidate; with EOT enabled the score
- * is the *average* drift across the clean candidate plus each injected transform
- * of it, so the search favors perturbations that survive everyday image handling.
- * A candidate is kept if its score beats the best so far. If nothing improves,
- * the original is returned and `report.result.improved` is false - we never
- * pretend a no-op is a cloak.
+ * any embedding work. Surviving candidates are scored per model: the drift of
+ * the clean candidate plus each injected EOT transform of it, averaged. The
+ * candidate's aggregate score is the mean of those per-model averages, so with
+ * extra score backends the search favors perturbations that move *several*
+ * models instead of overfitting to one. A candidate is kept if its aggregate
+ * beats the best so far. If nothing improves, the original is returned and
+ * `report.result.improved` is false - we never pretend a no-op is a cloak.
  *
- * Pure with respect to IO: the backend and transforms are injected.
+ * Pure with respect to IO: backends and transforms are injected.
  */
 export async function runCloak(
   backend: EmbeddingBackend,
@@ -47,37 +56,62 @@ export async function runCloak(
   const transforms = config.transforms ?? [];
   const eotMode = config.eotMode ?? DEFAULT_EOT_MODE;
   const eotTransforms = config.eotTransforms ?? [];
+  const scoreBackends = config.scoreBackends ?? [];
+  const allBackends = [backend, ...scoreBackends];
 
-  // Count every embedding evaluation for honest reporting of search cost.
+  // Count every embedding evaluation (across all models) for honest cost reporting.
   let embeddingEvaluations = 0;
-  const embed = async (img: PixelImage): Promise<Embedding> => {
+  const embedWith = async (b: EmbeddingBackend, img: PixelImage): Promise<Embedding> => {
     embeddingEvaluations += 1;
-    return backend.embedImage(img);
+    return b.embedImage(img);
   };
 
-  const originalEmbedding = await embed(image);
+  // Each model's view of the original, computed once.
+  const originalEmbeddings: Embedding[] = [];
+  for (const b of allBackends) {
+    originalEmbeddings.push(await embedWith(b, image));
+  }
   // Drift of the original against itself is 0 by definition; computed for honesty.
-  const initialDrift = embeddingDrift(originalEmbedding, originalEmbedding);
+  const initialDrift = embeddingDrift(originalEmbeddings[0], originalEmbeddings[0]);
 
-  // EOT score: mean embedding drift across the clean candidate and each transform
-  // of it. With no EOT transforms this is just the clean drift (original behavior).
+  // Score a candidate: each EOT transform is applied once, then every variant
+  // (clean first) is embedded under every model. Per model that yields clean,
+  // average, and minimum EOT drift; the aggregate is the mean of the per-model
+  // averages.
   const scoreCandidate = async (
     candidate: PixelImage,
-  ): Promise<{ cleanDrift: number; average: number; min: number }> => {
-    const cleanDrift = embeddingDrift(originalEmbedding, await embed(candidate));
-    const drifts = [cleanDrift];
+  ): Promise<{ models: CloakModelScore[]; aggregate: number }> => {
+    const variants: PixelImage[] = [candidate];
     for (const transform of eotTransforms) {
-      const transformed = await transform.apply(candidate);
-      drifts.push(embeddingDrift(originalEmbedding, await embed(transformed)));
+      variants.push(await transform.apply(candidate));
     }
-    return { cleanDrift, average: mean(drifts), min: Math.min(...drifts) };
+    const models: CloakModelScore[] = [];
+    for (let i = 0; i < allBackends.length; i++) {
+      const drifts: number[] = [];
+      for (const variant of variants) {
+        drifts.push(
+          embeddingDrift(originalEmbeddings[i], await embedWith(allBackends[i], variant)),
+        );
+      }
+      models.push({
+        model: modelName(allBackends[i]),
+        cleanDrift: drifts[0],
+        averageEotDrift: mean(drifts),
+        minEotDrift: Math.min(...drifts),
+      });
+    }
+    return { models, aggregate: aggregateAverageDrift(models) };
   };
 
   let best = image;
-  let bestScore = initialDrift;
-  let bestCleanDrift = initialDrift;
-  let bestEotAverage = initialDrift;
-  let bestEotMin = initialDrift;
+  // The unchanged original drifts 0 under every model.
+  let bestModels: CloakModelScore[] = allBackends.map((b) => ({
+    model: modelName(b),
+    cleanDrift: initialDrift,
+    averageEotDrift: initialDrift,
+    minEotDrift: initialDrift,
+  }));
+  let bestAggregate = initialDrift;
   let bestPsnr: number | null = null;
   let bestSsim = 1;
   let improved = false;
@@ -88,35 +122,35 @@ export async function runCloak(
 
     const candidatePsnr = psnr(image, candidate);
     const candidateSsim = ssim(image, candidate);
-    // Quality guardrails: discard anything too visually damaging, before EOT scoring.
+    // Quality guardrails: discard anything too visually damaging, before scoring.
     if (candidatePsnr < minPsnr || candidateSsim < 1 - maxSsimDrop) {
       candidatesRejected += 1;
       continue;
     }
 
-    const { cleanDrift, average, min } = await scoreCandidate(candidate);
-    if (average > bestScore) {
+    const { models, aggregate } = await scoreCandidate(candidate);
+    if (aggregate > bestAggregate) {
       best = candidate;
-      bestScore = average;
-      bestCleanDrift = cleanDrift;
-      bestEotAverage = average;
-      bestEotMin = min;
+      bestModels = models;
+      bestAggregate = aggregate;
       bestPsnr = Number.isFinite(candidatePsnr) ? candidatePsnr : null;
       bestSsim = candidateSsim;
       improved = true;
     }
   }
 
-  // Robustness: how much does the chosen image still drift after transforms?
+  // Robustness: how much does the chosen image still drift (primary model) after
+  // the full transform suite? An independent post-hoc check, not the search score.
   const driftAfter: number[] = [];
   for (const transform of transforms) {
     const transformed = await transform.apply(best);
-    driftAfter.push(embeddingDrift(originalEmbedding, await embed(transformed)));
+    driftAfter.push(embeddingDrift(originalEmbeddings[0], await embedWith(backend, transformed)));
   }
 
   const model = backend.id.startsWith("transformers:")
     ? backend.id.slice("transformers:".length)
     : undefined;
+  const primary = bestModels[0];
 
   return {
     image: improved ? best : clonePixelImage(image),
@@ -138,7 +172,7 @@ export async function runCloak(
       result: {
         improved,
         initialDrift,
-        bestDrift: bestCleanDrift,
+        bestDrift: primary.cleanDrift,
         psnr: improved ? bestPsnr : null,
         ssim: improved ? bestSsim : 1,
         candidatesRejected,
@@ -146,10 +180,18 @@ export async function runCloak(
       eot: {
         mode: eotMode,
         transforms: ["clean", ...eotTransforms.map((t) => t.name)],
-        cleanDrift: bestCleanDrift,
-        averageDrift: bestEotAverage,
-        minDrift: bestEotMin,
+        cleanDrift: primary.cleanDrift,
+        averageDrift: primary.averageEotDrift,
+        minDrift: primary.minEotDrift,
         embeddingEvaluations,
+      },
+      scoring: {
+        mode: scoreBackends.length > 0 ? "multi-model" : "single-model",
+        primaryModel: modelName(backend),
+        scoreModels: scoreBackends.map(modelName),
+        models: bestModels,
+        aggregateAverageDrift: bestAggregate,
+        aggregateMinModelDrift: aggregateMinModelDrift(bestModels),
       },
       robustness: {
         transformsTested: driftAfter.length,
