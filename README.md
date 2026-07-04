@@ -23,24 +23,33 @@ results so you can see what each technique actually does.
 
 ---
 
+## The problem
+
+Artists and designers have no practical way to know whether image-protection
+techniques actually help against unauthorized AI use - scraping, training, style
+mimicry, or reuse of their work. The available tooling sits at one of two
+extremes: vague promises with no way to check them, or strong claims - "AI-proof",
+"blocks training" - that don't survive scrutiny. Either way, the artist cannot
+tell what (if anything) is actually protecting them.
+
+## The solution this project works toward
+
+A toolkit where protection is **layered, composable, and above all measurable**:
+trace your work (watermark + verify), perturb what models see (cloak), and audit
+every layer against realistic conditions - so that a developer can pass in an
+image and get back a protected image, sidecar metadata, and honest reports of
+what held up and what did not. Not a magic shield: **evidence instead of
+marketing claims.** The layers that exist today and the ones still to come are
+listed below.
+
+---
+
 ## Documentation
 
 - [Getting started](./docs/GETTING_STARTED.md)
 - [Demo guide](./docs/DEMO.md)
 - [Architecture overview](./docs/ARCHITECTURE.md)
 - [Roadmap](./ROADMAP.md)
-
----
-
-## Why this exists
-
-Most "protect your art from AI" tooling sits at one of two extremes: vague
-promises with no way to check them, or strong claims - "AI-proof", "blocks
-training" - that don't survive scrutiny. OpenArtShield takes the opposite
-approach: **measurable, reproducible, honest experiments.** The goal is a
-practical SDK and research harness for **comparing protection layers** under
-realistic conditions, so artists and developers can see what a technique actually
-does instead of taking a marketing claim on faith.
 
 ---
 
