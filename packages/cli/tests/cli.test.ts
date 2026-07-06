@@ -10,7 +10,7 @@ import { runCloakCommand } from "../src/commands/cloak.js";
 import { runExtract } from "../src/commands/extract.js";
 import { runAuditCommand } from "../src/commands/audit.js";
 import { runCapacity } from "../src/commands/capacity.js";
-import { runProtect } from "../src/commands/protect.js";
+import { runProtect, runProtectWorkflow } from "../src/commands/protect.js";
 import { runVerify } from "../src/commands/verify.js";
 import { getVersion, versionCommand } from "../src/commands/version.js";
 import { buildCli } from "../src/index.js";
@@ -303,6 +303,166 @@ describe("oas protect", () => {
 
     // No protected image should have been written.
     expect(await exists(out)).toBe(false);
+  });
+});
+
+describe("oas protect profiles", () => {
+  it("fails clearly on an unknown profile", async () => {
+    await expect(
+      runProtectWorkflow({
+        input: inputPath,
+        message,
+        seed: 1,
+        out: join(dir, "x-profile.png"),
+        profile: "balanced",
+      }),
+    ).rejects.toThrow(/Unknown protection profile "balanced"/);
+  });
+
+  it("defaults to creator-balanced with no cloak or ai-audit reports", async () => {
+    const out = join(dir, "profile-default.png");
+    const r = await runProtectWorkflow({
+      input: inputPath,
+      message,
+      seed: 123,
+      repetitions: 5,
+      out,
+      now: "2026-07-06T00:00:00.000Z",
+    });
+    expect(r.profile.name).toBe("creator-balanced");
+    expect(r.cloak).toBeUndefined();
+    expect(r.aiAudit).toBeUndefined();
+    expect(r.verification).toBeUndefined();
+    expect(await exists(out)).toBe(true);
+    expect(await exists(join(dir, "profile-default.cloak.json"))).toBe(false);
+    expect(await exists(join(dir, "profile-default.ai-audit.json"))).toBe(false);
+  });
+
+  it("trace-only verifies the output and generates no model reports", async () => {
+    const out = join(dir, "profile-trace.png");
+    const r = await runProtectWorkflow({
+      input: inputPath,
+      message,
+      seed: 123,
+      repetitions: 5,
+      out,
+      profile: "trace-only",
+      now: "2026-07-06T00:00:00.000Z",
+    });
+    expect(r.profile.name).toBe("trace-only");
+    expect(r.verification).toBeDefined();
+    expect(r.verification?.checksumValid).toBe(true);
+    expect(r.verification?.recoveredMessage).toBe(message);
+    expect(r.cloak).toBeUndefined();
+    expect(r.aiAudit).toBeUndefined();
+    // Deterministic default bundle paths.
+    expect(r.protect.jsonPath).toBe(join(dir, "profile-trace.audit.json"));
+    expect(r.protect.sidecarPath).toBe(join(dir, "profile-trace.openartshield.json"));
+    expect(await exists(join(dir, "profile-trace.cloak.json"))).toBe(false);
+    expect(await exists(join(dir, "profile-trace.ai-audit.json"))).toBe(false);
+  });
+
+  it("creator-experimental orchestrates cloak + ai-audit and keeps the watermark verifiable", async () => {
+    const out = join(dir, "profile-exp.png");
+    const r = await runProtectWorkflow({
+      input: inputPath,
+      message,
+      seed: 123,
+      repetitions: 5,
+      out,
+      profile: "creator-experimental",
+      backend: "mock",
+      scoreModels: ["variant-a"],
+      cloakStrength: 8,
+      steps: 4,
+      now: "2026-07-06T00:00:00.000Z",
+    });
+
+    expect(r.profile.name).toBe("creator-experimental");
+    expect(r.cloak).toBeDefined();
+    expect(r.cloak?.jsonPath).toBe(join(dir, "profile-exp.cloak.json"));
+    expect(await exists(r.cloak!.jsonPath)).toBe(true);
+    expect(r.cloak?.report.scoring.mode).toBe("multi-model");
+
+    expect(r.aiAudit).toBeDefined();
+    expect(r.aiAudit?.jsonPath).toBe(join(dir, "profile-exp.ai-audit.json"));
+    expect(await exists(r.aiAudit!.jsonPath)).toBe(true);
+    // Under the mock backend a near-invisible perturbation can round to ~0 drift;
+    // the point here is that the measure layer ran and produced a real report.
+    expect(r.aiAudit?.report.backend).toBe("mock");
+    expect(r.aiAudit?.report.embedding.drift).toBeGreaterThanOrEqual(0);
+
+    // The watermark is embedded after the cloak, so it must still verify.
+    const v = await runVerify({ input: out, sidecar: r.protect.sidecarPath });
+    expect(v.checksumValid).toBe(true);
+    expect(v.recoveredMessage).toBe(message);
+  });
+
+  it("writes default HTML report paths when --html is boolean true", async () => {
+    const out = join(dir, "profile-exp-html.png");
+    const r = await runProtectWorkflow({
+      input: inputPath,
+      message,
+      seed: 123,
+      repetitions: 5,
+      out,
+      profile: "creator-experimental",
+      backend: "mock",
+      cloakStrength: 8,
+      steps: 3,
+      html: true,
+      now: "2026-07-06T00:00:00.000Z",
+    });
+    expect(r.protect.htmlPath).toBe(join(dir, "profile-exp-html.audit.html"));
+    expect(r.cloak?.htmlPath).toBe(join(dir, "profile-exp-html.cloak.html"));
+    expect(r.aiAudit?.htmlPath).toBe(join(dir, "profile-exp-html.ai-audit.html"));
+    expect(await exists(r.protect.htmlPath!)).toBe(true);
+    expect(await exists(r.cloak!.htmlPath!)).toBe(true);
+    expect(await exists(r.aiAudit!.htmlPath!)).toBe(true);
+  });
+
+  it("fails clearly when creator-experimental requests clip without the optional dependency", async () => {
+    await expect(
+      runProtectWorkflow({
+        input: inputPath,
+        message,
+        seed: 1,
+        out: join(dir, "x-clip.png"),
+        profile: "creator-experimental",
+        backend: "clip",
+        steps: 1,
+      }),
+    ).rejects.toThrow(/@huggingface\/transformers/);
+  });
+
+  it("parses --profile, repeatable model flags, and boolean --html", () => {
+    const cli = buildCli();
+    cli.parse(
+      [
+        "node",
+        "oas",
+        "protect",
+        "a.png",
+        "--profile",
+        "creator-experimental",
+        "--message",
+        "m",
+        "--seed",
+        "1",
+        "--out",
+        "b.png",
+        "--score-model",
+        "model-a",
+        "--compare-model",
+        "model-b",
+        "--html",
+      ],
+      { run: false },
+    );
+    expect(cli.options.profile).toBe("creator-experimental");
+    expect(cli.options.scoreModel).toBe("model-a");
+    expect(cli.options.compareModel).toBe("model-b");
+    expect(cli.options.html).toBe(true);
   });
 });
 

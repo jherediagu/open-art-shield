@@ -156,19 +156,33 @@ export function buildCli() {
     });
 
   cli
-    .command("protect <input>", "One-shot: capacity check, embed, audit, reports, sidecar")
+    .command("protect <input>", "Profile-driven protection bundle: embed, audit, reports, sidecar")
+    .option(
+      "--profile <name>",
+      'Protection profile: "trace-only", "creator-balanced" (default), or "creator-experimental"',
+    )
     .option("--message <message>", "Message to embed (UTF-8)")
     .option("--seed <seed>", "Deterministic seed for block selection")
-    .option("--strength <strength>", "Embedding strength (default 8)")
+    .option("--strength <strength>", "Watermark embedding strength (default 8)")
     .option("--repetitions <repetitions>", "Repetition coding count (default 5)")
     .option("--out <out>", "Output path for the protected image")
     .option("--json <path>", "JSON report path (default <out-basename>.audit.json)")
-    .option("--html <path>", "Also write an HTML report")
+    .option("--html [path]", "Write HTML reports (default paths when no path is given)")
     .option("--sidecar <path>", "Sidecar path (default <out-basename>.openartshield.json)")
     .option("--skip-sidecar", "Do not write a sidecar file")
     .option("--store-message", "Store the message inside the sidecar (off by default)")
+    .option("--backend <id>", 'Embedding backend for cloak/measure layers: "mock" or "clip"')
+    .option("--model <id>", "Primary model id for the clip backend")
+    .option("--score-model <id>", "Extra cloak scoring model (repeatable)")
+    .option("--compare-model <id>", "Extra ai-audit transfer model (repeatable; requires clip)")
+    .option("--eot <mode>", 'Cloak EOT mode: "none" (default), "mild", or "standard"')
+    .option("--cloak-strength <number>", "Max per-channel pixel change for the cloak (default 4)")
+    .option("--steps <number>", "Number of cloak candidate perturbations (default 8)")
     .example(
-      '  oas protect input.png --message "artist=demo" --seed 123 --out protected.png --html report.html',
+      '  oas protect input.png --message "artist=demo" --seed 123 --out protected.png --html',
+    )
+    .example(
+      '  oas protect input.png --profile creator-experimental --message "artist=demo" --seed 123 --backend clip --eot standard --out protected.png',
     )
     .action(async (input: string, options: Record<string, unknown>) => {
       await protectCommand({
@@ -176,13 +190,26 @@ export function buildCli() {
         message: requiredString(options.message, "--message"),
         seed: requiredInt(options.seed, "--seed"),
         out: requiredString(options.out, "--out"),
+        profile: typeof options.profile === "string" ? options.profile : undefined,
         strength: optionalInt(options.strength, "--strength"),
         repetitions: optionalInt(options.repetitions, "--repetitions"),
         json: typeof options.json === "string" ? options.json : undefined,
-        html: typeof options.html === "string" ? options.html : undefined,
+        html:
+          options.html === true
+            ? true
+            : typeof options.html === "string"
+              ? options.html
+              : undefined,
         sidecar: typeof options.sidecar === "string" ? options.sidecar : undefined,
         noSidecar: options.skipSidecar === true,
         storeMessage: options.storeMessage === true,
+        backend: typeof options.backend === "string" ? options.backend : undefined,
+        model: typeof options.model === "string" ? options.model : undefined,
+        scoreModels: optionalStringList(options.scoreModel, "--score-model"),
+        compareModels: optionalStringList(options.compareModel, "--compare-model"),
+        eot: typeof options.eot === "string" ? options.eot : undefined,
+        cloakStrength: optionalNumber(options.cloakStrength, "--cloak-strength"),
+        steps: optionalInt(options.steps, "--steps"),
       });
     });
 

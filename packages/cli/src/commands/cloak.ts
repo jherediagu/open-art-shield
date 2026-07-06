@@ -1,22 +1,14 @@
 import { writeFile } from "node:fs/promises";
 import {
-  createMockEmbeddingBackend,
   EOT_TRANSFORM_NAMES,
   renderCloakHtmlReport,
   resolveEotMode,
   runCloak,
   serializeCloakReport,
   type CloakReport,
-  type EmbeddingBackend,
 } from "@openartshield/core";
-import {
-  createTransformersEmbeddingBackend,
-  defaultTransforms,
-  readImage,
-  selectTransforms,
-  writeImage,
-} from "@openartshield/node";
-import { resolveEmbeddingBackend } from "../utils/backend.js";
+import { defaultTransforms, readImage, selectTransforms, writeImage } from "@openartshield/node";
+import { resolveEmbeddingBackend, resolveScoreBackends } from "../utils/backend.js";
 import { failure, info, success } from "../utils/output.js";
 
 export type CloakOptions = {
@@ -56,14 +48,7 @@ export async function runCloakCommand(options: CloakOptions): Promise<CloakRunRe
   const eotMode = resolveEotMode(options.eot ?? "none");
   const eotTransforms = selectTransforms([...EOT_TRANSFORM_NAMES[eotMode]]);
 
-  // Extra scoring models: real CLIP backends for clip, deterministic mock
-  // variants for mock (so CI can exercise multi-model scoring without weights).
-  const backendId = options.backend ?? "mock";
-  const scoreBackends: EmbeddingBackend[] = (options.scoreModels ?? []).map((scoreModel) =>
-    backendId === "clip" || backendId === "transformers"
-      ? createTransformersEmbeddingBackend({ model: scoreModel })
-      : createMockEmbeddingBackend(scoreModel),
-  );
+  const scoreBackends = resolveScoreBackends(options.backend, options.scoreModels ?? []);
 
   const image = await readImage(options.input);
 

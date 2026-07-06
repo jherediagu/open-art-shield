@@ -15,3 +15,17 @@ export function resolveEmbeddingBackend(
   }
   throw new CliError(`Unknown backend "${backendId}". Use "mock" (default) or "clip".`);
 }
+
+// Extra scoring backends for multi-model cloak scoring: real CLIP backends for
+// clip, deterministic mock variants for mock (so CI can run without weights).
+export function resolveScoreBackends(
+  id: string | undefined,
+  scoreModels: string[],
+): EmbeddingBackend[] {
+  const backendId = id ?? "mock";
+  return scoreModels.map((scoreModel) =>
+    backendId === "clip" || backendId === "transformers"
+      ? createTransformersEmbeddingBackend({ model: scoreModel })
+      : createMockEmbeddingBackend(scoreModel),
+  );
+}

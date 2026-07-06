@@ -101,3 +101,17 @@ export {
 export type { EotMode } from "./cloak/eot.js";
 export { aggregateAverageDrift, aggregateMinModelDrift } from "./cloak/scoring.js";
 export type { CloakModelScore } from "./cloak/scoring.js";
+
+// Protection profiles (pure layer combinations; orchestration lives in the CLI).
+export {
+  PROTECTION_PROFILE_NAMES,
+  PROTECTION_PROFILES,
+  DEFAULT_PROTECTION_PROFILE,
+  isProtectionProfileName,
+  resolveProtectionProfile,
+} from "./profiles.js";
+export type {
+  ProtectionProfileName,
+  ProtectionProfileLayers,
+  ProtectionProfile,
+} from "./profiles.js";
