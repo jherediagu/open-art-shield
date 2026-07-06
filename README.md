@@ -277,6 +277,56 @@ sidecar (off by default).
 > watermark later (seed, message length, repetitions, strength). It does **not**
 > store the original message by default.
 
+### Protection profiles
+
+Profiles combine OpenArtShield layers into practical workflows, so you pick a
+profile instead of hand-orchestrating `protect`, `cloak`, and `ai-audit`.
+
+| Profile                | Purpose                                                          |
+| ---------------------- | ---------------------------------------------------------------- |
+| `trace-only`           | watermark, sidecar, verify metadata, robustness audit            |
+| `creator-balanced`     | practical default traceability workflow with reports             |
+| `creator-experimental` | watermark + experimental cloak + AI audit + transfer measurement |
+
+The default (no `--profile`) is `creator-balanced`, which is the classic
+`oas protect` behavior. `trace-only` and `creator-balanced` need no model
+downloads; `creator-experimental` runs the cloak and measure layers and accepts
+`--backend clip`, `--score-model`, `--compare-model`, `--eot`, `--cloak-strength`
+and `--steps` (note: `--strength` remains the watermark strength; the cloak
+strength is `--cloak-strength`). In `creator-experimental` the cloak runs
+_before_ watermarking so the watermark is embedded last and stays verifiable; if
+the cloak finds no improving candidate, the bundle continues watermark-only and
+the report says so.
+
+```bash
+oas protect artwork.png \
+  --profile trace-only \
+  --message "artist=demo" \
+  --seed 123 \
+  --out artwork.protected.png
+```
+
+```bash
+oas protect artwork.png \
+  --profile creator-experimental \
+  --message "artist=demo" \
+  --seed 123 \
+  --backend clip \
+  --model Xenova/clip-vit-base-patch32 \
+  --score-model Xenova/clip-vit-base-patch16 \
+  --compare-model Xenova/clip-vit-base-patch16 \
+  --eot standard \
+  --out artwork.protected.png \
+  --html
+```
+
+Report paths derive deterministically from the output basename:
+`artwork.protected.audit.json`, `.cloak.json`, `.ai-audit.json`, and
+`.openartshield.json` (plus `.audit.html` / `.cloak.html` / `.ai-audit.html` with
+`--html`). Only the reports relevant to the selected profile are written. A
+profile is a workflow, not a guarantee - every layer stays an experimental,
+measurable signal.
+
 ### Verify
 
 `oas verify` reads the sidecar and uses its parameters to extract and check the
