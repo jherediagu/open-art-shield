@@ -469,6 +469,11 @@ Transfer measurement does not prove protection. It only measures whether drift
 appears across the selected embedding models, and CLIP-family transfer is only a
 proxy for broader model behavior.
 
+A complete, reproducible transfer experiment - single-model vs. multi-model
+cloaks measured against a held-out CLIP model neither saw - is checked in under
+[`examples/cloak-transfer/`](examples/cloak-transfer/README.md), with real
+numbers and an honest reading of them.
+
 > **Caveats.** The `mock` backend does not represent how real AI systems see
 > images. CLIP is only one proxy for image-text embedding behavior; it does not
 > represent all diffusion models or training pipelines. Embedding drift is a

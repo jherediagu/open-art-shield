@@ -1,0 +1,85 @@
+{
+  "version": "0.3.0",
+  "input": {
+    "path": "examples/cloak-eot/images/original.png",
+    "width": 512,
+    "height": 512
+  },
+  "output": {
+    "path": "examples/cloak-transfer/images/cloaked-multi.png"
+  },
+  "backend": {
+    "id": "transformers:Xenova/clip-vit-base-patch32",
+    "model": "Xenova/clip-vit-base-patch32"
+  },
+  "parameters": {
+    "strength": 4,
+    "steps": 12,
+    "seed": 123,
+    "minPsnr": 38,
+    "maxSsimDrop": 0.02
+  },
+  "result": {
+    "improved": true,
+    "initialDrift": 0,
+    "bestDrift": 0.081376159544709,
+    "psnr": 40.72272297192487,
+    "ssim": 0.9820566249376513,
+    "candidatesRejected": 0
+  },
+  "eot": {
+    "mode": "standard",
+    "transforms": [
+      "clean",
+      "jpeg_quality_95",
+      "jpeg_quality_85",
+      "jpeg_quality_70",
+      "resize_75",
+      "brightness_0_9",
+      "brightness_1_1",
+      "contrast_0_9",
+      "contrast_1_1",
+      "gaussian_blur_0_75",
+      "screenshot_simulation"
+    ],
+    "cleanDrift": 0.081376159544709,
+    "averageDrift": 0.06549498391451479,
+    "minDrift": 0.03621934174778285,
+    "embeddingEvaluations": 279
+  },
+  "scoring": {
+    "mode": "multi-model",
+    "primaryModel": "Xenova/clip-vit-base-patch32",
+    "scoreModels": [
+      "Xenova/clip-vit-base-patch16"
+    ],
+    "models": [
+      {
+        "model": "Xenova/clip-vit-base-patch32",
+        "cleanDrift": 0.081376159544709,
+        "averageEotDrift": 0.06549498391451479,
+        "minEotDrift": 0.03621934174778285
+      },
+      {
+        "model": "Xenova/clip-vit-base-patch16",
+        "cleanDrift": 0.09529149881478005,
+        "averageEotDrift": 0.08277587066332169,
+        "minEotDrift": 0.0387266556561755
+      }
+    ],
+    "aggregateAverageDrift": 0.07413542728891824,
+    "aggregateMinModelDrift": 0.06549498391451479
+  },
+  "robustness": {
+    "transformsTested": 13,
+    "averageDriftAfterTransforms": 0.06049295109317869
+  },
+  "limitations": [
+    "This is an experimental embedding-space perturbation.",
+    "It does not prevent AI training.",
+    "It does not guarantee style protection.",
+    "It is not Glaze, Nightshade, or a reproduction of those papers.",
+    "CLIP is only one proxy model; results do not generalize to all systems.",
+    "A higher embedding drift score is a measurement, not a guarantee."
+  ]
+}
