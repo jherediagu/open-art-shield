@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenArtShield ai-audit report</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem auto; max-width: 860px; padding: 0 1rem; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.1rem; margin-top: 2rem; }
+  .sub { color: #777; margin-top: 0; }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.5rem 1.5rem; margin: 1.25rem 0; }
+  .meta div { font-size: 0.9rem; }
+  .meta b { display: block; color: #777; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  th, td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #8883; text-align: left; }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: #777; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
+  .note { margin-top: 1.5rem; padding: 0.75rem 1rem; border-left: 3px solid #f0ad4e; background: #f0ad4e1a; font-size: 0.88rem; }
+  footer { margin-top: 2rem; color: #888; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+  <h1>OpenArtShield ai-audit report</h1>
+  <p class="sub">Backend: <code>transformers:Xenova/clip-vit-base-patch32</code> &middot; schema v0.2.0</p>
+
+  <div class="meta">
+    <div><b>Embedding dims</b>512</div>
+    <div><b>Cosine similarity</b>0.9265</div>
+    <div><b>Distance</b>4.3784</div>
+    <div><b>Drift</b>0.0735</div>
+    <div><b>Mean drift after transforms</b>0.0638</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Transform</th>
+        <th class="num">Cosine to original</th>
+        <th class="num">Drift</th>
+        <th class="num">PSNR (dB)</th>
+        <th class="num">SSIM</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>jpeg_quality_95</code></td>
+        <td class="num">0.8874</td>
+        <td class="num">0.1126</td>
+        <td class="num">38.73</td>
+        <td class="num">0.9722</td>
+      </tr>
+      <tr>
+        <td><code>jpeg_quality_85</code></td>
+        <td class="num">0.9448</td>
+        <td class="num">0.0552</td>
+        <td class="num">34.28</td>
+        <td class="num">0.8539</td>
+      </tr>
+      <tr>
+        <td><code>jpeg_quality_70</code></td>
+        <td class="num">0.9342</td>
+        <td class="num">0.0658</td>
+        <td class="num">33.04</td>
+        <td class="num">0.7730</td>
+      </tr>
+      <tr>
+        <td><code>resize_75</code></td>
+        <td class="num">0.9570</td>
+        <td class="num">0.0430</td>
+        <td class="num">33.14</td>
+        <td class="num">0.7493</td>
+      </tr>
+      <tr>
+        <td><code>resize_50</code></td>
+        <td class="num">0.9545</td>
+        <td class="num">0.0455</td>
+        <td class="num">32.82</td>
+        <td class="num">0.7141</td>
+      </tr>
+      <tr>
+        <td><code>center_crop_90</code></td>
+        <td class="num">0.9422</td>
+        <td class="num">0.0578</td>
+        <td class="num">23.99</td>
+        <td class="num">0.4814</td>
+      </tr>
+      <tr>
+        <td><code>gaussian_blur_0_75</code></td>
+        <td class="num">0.9584</td>
+        <td class="num">0.0416</td>
+        <td class="num">34.78</td>
+        <td class="num">0.8186</td>
+      </tr>
+      <tr>
+        <td><code>gaussian_blur_1_25</code></td>
+        <td class="num">0.9488</td>
+        <td class="num">0.0512</td>
+        <td class="num">32.04</td>
+        <td class="num">0.7014</td>
+      </tr>
+      <tr>
+        <td><code>brightness_0_9</code></td>
+        <td class="num">0.9335</td>
+        <td class="num">0.0665</td>
+        <td class="num">23.36</td>
+        <td class="num">0.9888</td>
+      </tr>
+      <tr>
+        <td><code>brightness_1_1</code></td>
+        <td class="num">0.9331</td>
+        <td class="num">0.0669</td>
+        <td class="num">23.20</td>
+        <td class="num">0.9903</td>
+      </tr>
+      <tr>
+        <td><code>contrast_0_9</code></td>
+        <td class="num">0.9350</td>
+        <td class="num">0.0650</td>
+        <td class="num">34.32</td>
+        <td class="num">0.9963</td>
+      </tr>
+      <tr>
+        <td><code>contrast_1_1</code></td>
+        <td class="num">0.9262</td>
+        <td class="num">0.0738</td>
+        <td class="num">35.41</td>
+        <td class="num">0.9967</td>
+      </tr>
+      <tr>
+        <td><code>screenshot_simulation</code></td>
+        <td class="num">0.9163</td>
+        <td class="num">0.0837</td>
+        <td class="num">32.37</td>
+        <td class="num">0.7151</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Transfer across models</h2>
+  <div class="meta">
+    <div><b>Primary model</b><code>Xenova/clip-vit-base-patch32</code></div>
+    <div><b>Primary drift</b>0.0735</div>
+    <div><b>Average transfer drift</b>0.0949</div>
+    <div><b>Minimum transfer drift</b>0.0862</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Comparison model</th>
+        <th class="num">Cosine similarity</th>
+        <th class="num">Drift</th>
+        <th class="num">Transfer ratio</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>Xenova/clip-vit-base-patch16</code></td>
+        <td class="num">0.9138</td>
+        <td class="num">0.0862</td>
+        <td class="num">1.17</td>
+      </tr>
+      <tr>
+        <td><code>Xenova/clip-vit-large-patch14</code></td>
+        <td class="num">0.8964</td>
+        <td class="num">0.1036</td>
+        <td class="num">1.41</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Transfer drift is measured only across the selected embedding models. This does not prove protection against training or style mimicry. CLIP-family transfer is only a proxy for broader model behavior.</p>
+  <p class="note">Embedding drift measures how a model's representation changes. It does not prove protection from AI training, copying, or style mimicry. The v0.1 'mock' backend is a deterministic downsampled-luma feature, not a learned perceptual model; use a real backend (e.g. transformers.js) for meaningful numbers.</p>
+  <footer>Generated by OpenArtShield &middot; <code>oas ai-audit</code></footer>
+</body>
+</html>

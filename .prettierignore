@@ -7,3 +7,4 @@ pnpm-lock.yaml
 # Generated audit artifacts - produced verbatim by the CLI, not hand-formatted.
 examples/reports/
 examples/cloak-eot/reports/
+examples/cloak-transfer/reports/

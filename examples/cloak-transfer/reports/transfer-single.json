@@ -1,0 +1,139 @@
+{
+  "version": "0.2.0",
+  "backend": "transformers:Xenova/clip-vit-base-patch32",
+  "image": {
+    "original": "examples/cloak-eot/images/original.png",
+    "candidate": "examples/cloak-transfer/images/cloaked-single.png"
+  },
+  "embedding": {
+    "dimensions": 512,
+    "cosineSimilarity": 0.9264531613373034,
+    "distance": 4.378385329622418,
+    "drift": 0.07354683866269662
+  },
+  "transforms": [
+    {
+      "transform": "jpeg_quality_95",
+      "cosineToOriginal": 0.8873621613551382,
+      "drift": 0.11263783864486177,
+      "psnr": 38.72649571852826,
+      "ssim": 0.9722366300094526
+    },
+    {
+      "transform": "jpeg_quality_85",
+      "cosineToOriginal": 0.9447599692328187,
+      "drift": 0.055240030767181314,
+      "psnr": 34.27712831592375,
+      "ssim": 0.8539276942041936
+    },
+    {
+      "transform": "jpeg_quality_70",
+      "cosineToOriginal": 0.9341613549826931,
+      "drift": 0.06583864501730685,
+      "psnr": 33.03974509050186,
+      "ssim": 0.7729556348697839
+    },
+    {
+      "transform": "resize_75",
+      "cosineToOriginal": 0.956954801138073,
+      "drift": 0.043045198861927036,
+      "psnr": 33.13639060454263,
+      "ssim": 0.7493078252981792
+    },
+    {
+      "transform": "resize_50",
+      "cosineToOriginal": 0.954461385844959,
+      "drift": 0.04553861415504101,
+      "psnr": 32.81525031109305,
+      "ssim": 0.7140677566913234
+    },
+    {
+      "transform": "center_crop_90",
+      "cosineToOriginal": 0.9421563417684545,
+      "drift": 0.05784365823154547,
+      "psnr": 23.989910680455182,
+      "ssim": 0.4813811610064071
+    },
+    {
+      "transform": "gaussian_blur_0_75",
+      "cosineToOriginal": 0.9583538459773839,
+      "drift": 0.041646154022616066,
+      "psnr": 34.77883754372115,
+      "ssim": 0.8185758127936681
+    },
+    {
+      "transform": "gaussian_blur_1_25",
+      "cosineToOriginal": 0.9487939148228474,
+      "drift": 0.05120608517715264,
+      "psnr": 32.03710056347156,
+      "ssim": 0.7014256027440908
+    },
+    {
+      "transform": "brightness_0_9",
+      "cosineToOriginal": 0.933498729506037,
+      "drift": 0.06650127049396304,
+      "psnr": 23.360209497135997,
+      "ssim": 0.9887752096272514
+    },
+    {
+      "transform": "brightness_1_1",
+      "cosineToOriginal": 0.9330667732087231,
+      "drift": 0.06693322679127689,
+      "psnr": 23.19686856019475,
+      "ssim": 0.9902563001058902
+    },
+    {
+      "transform": "contrast_0_9",
+      "cosineToOriginal": 0.9349781750867773,
+      "drift": 0.06502182491322273,
+      "psnr": 34.32129158094681,
+      "ssim": 0.9963197416075231
+    },
+    {
+      "transform": "contrast_1_1",
+      "cosineToOriginal": 0.9262456085143445,
+      "drift": 0.07375439148565555,
+      "psnr": 35.4094594461008,
+      "ssim": 0.9967339460583956
+    },
+    {
+      "transform": "screenshot_simulation",
+      "cosineToOriginal": 0.9163111878228376,
+      "drift": 0.0836888121771624,
+      "psnr": 32.37477293540416,
+      "ssim": 0.7151117437992457
+    }
+  ],
+  "summary": {
+    "transformsTested": 13,
+    "meanDriftAfterTransforms": 0.06376121159530099
+  },
+  "limitations": "Embedding drift measures how a model's representation changes. It does not prove protection from AI training, copying, or style mimicry. The v0.1 'mock' backend is a deterministic downsampled-luma feature, not a learned perceptual model; use a real backend (e.g. transformers.js) for meaningful numbers.",
+  "transfer": {
+    "primaryModel": "Xenova/clip-vit-base-patch32",
+    "comparisons": [
+      {
+        "model": "Xenova/clip-vit-base-patch16",
+        "cosineSimilarity": 0.9137911013560809,
+        "drift": 0.08620889864391912,
+        "transferRatio": 1.1721632120626384
+      },
+      {
+        "model": "Xenova/clip-vit-large-patch14",
+        "cosineSimilarity": 0.8963507462076283,
+        "drift": 0.10364925379237167,
+        "transferRatio": 1.4092958402703333
+      }
+    ],
+    "summary": {
+      "primaryDrift": 0.07354683866269662,
+      "averageTransferDrift": 0.09492907621814539,
+      "minimumTransferDrift": 0.08620889864391912
+    },
+    "limitations": [
+      "Transfer drift is measured only across the selected embedding models.",
+      "This does not prove protection against training or style mimicry.",
+      "CLIP-family transfer is only a proxy for broader model behavior."
+    ]
+  }
+}
