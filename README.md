@@ -699,7 +699,39 @@ console.log(extraction.recoveredMessage); // "artist=demo;license=no-ai-training
 console.log(extraction.checksumValid); // true
 ```
 
-### With Node image IO (`@openartshield/node`)
+### High-level: `protectArtwork` (`@openartshield/node`)
+
+The same profile-driven bundle as `oas protect`, as one function call:
+
+```ts
+import { protectArtwork, verifyArtwork } from "@openartshield/node";
+
+const result = await protectArtwork("artwork.png", {
+  profile: "creator-experimental",
+  message: "artist=demo;license=no-ai-training",
+  seed: 123,
+  outputPath: "artwork.protected.png",
+  backend: "clip",
+  model: "Xenova/clip-vit-base-patch32",
+  scoreModels: ["Xenova/clip-vit-base-patch16"],
+  eot: "standard",
+  html: true,
+});
+
+// result.protect.report      -> robustness audit
+// result.cloak?.report       -> cloak search (scoring, EOT, per-model drift)
+// result.aiAudit?.report     -> embedding drift of the final output
+// result.verification        -> present with the trace-only profile
+
+const check = await verifyArtwork("artwork.protected.png");
+// check.checksumValid, check.recoveredMessage
+```
+
+`aiAuditArtwork(original, candidate, options)` is also exported for standalone
+drift/transfer measurement. Profiles, defaults, and report paths behave exactly
+like the CLI - the `oas` commands are thin wrappers over these functions.
+
+### Lower-level: with Node image IO (`@openartshield/node`)
 
 ```ts
 import { embedWatermark } from "@openartshield/core";

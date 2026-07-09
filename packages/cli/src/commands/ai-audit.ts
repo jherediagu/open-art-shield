@@ -1,19 +1,5 @@
-import { writeFile } from "node:fs/promises";
-import {
-  buildTransferComparison,
-  buildTransferReport,
-  renderEmbeddingHtmlReport,
-  runEmbeddingAudit,
-  serializeEmbeddingReport,
-  type EmbeddingAuditReport,
-  type TransferComparison,
-} from "@openartshield/core";
-import {
-  createTransformersEmbeddingBackend,
-  defaultTransforms,
-  readImage,
-} from "@openartshield/node";
-import { resolveEmbeddingBackend } from "../utils/backend.js";
+import { serializeEmbeddingReport, type EmbeddingAuditReport } from "@openartshield/core";
+import { aiAuditArtwork } from "@openartshield/node";
 import { CliError } from "../utils/errors.js";
 import { failure, info, raw, success } from "../utils/output.js";
 
@@ -34,11 +20,8 @@ export type AiAuditOptions = {
   html?: string;
 };
 
-/** Strip the backend id down to a model name for display/reporting. */
-function modelFromBackendId(id: string): string {
-  return id.startsWith("transformers:") ? id.slice("transformers:".length) : id;
-}
-
+// Thin wrapper over the @openartshield/node SDK (`aiAuditArtwork`): the CLI adds
+// flag-specific validation text and owns terminal output.
 export async function runAiAudit(options: AiAuditOptions): Promise<EmbeddingAuditReport> {
   const backendId = options.backend ?? "mock";
   const compareModels = options.compareModels ?? [];
@@ -49,49 +32,14 @@ export async function runAiAudit(options: AiAuditOptions): Promise<EmbeddingAudi
     );
   }
 
-  const backend = resolveEmbeddingBackend(options.backend, options.model);
-  const original = await readImage(options.original);
-  const candidate = await readImage(options.candidate);
-
-  const report = await runEmbeddingAudit(backend, original, candidate, {
-    transforms: defaultTransforms,
-    originalPath: options.original,
-    candidatePath: options.candidate,
-    ...(options.prompt !== undefined ? { prompt: options.prompt } : {}),
+  return aiAuditArtwork(options.original, options.candidate, {
+    backend: options.backend,
+    model: options.model,
+    compareModels: options.compareModels,
+    prompt: options.prompt,
+    jsonPath: options.out,
+    htmlPath: options.html,
   });
-
-  // Transfer measurement: re-embed the same pair on each comparison model. A
-  // model that fails to load throws and fails the run - no silent skips.
-  if (compareModels.length > 0) {
-    const comparisons: TransferComparison[] = [];
-    for (const model of compareModels) {
-      const compareBackend = createTransformersEmbeddingBackend({ model });
-      const originalEmbedding = await compareBackend.embedImage(original);
-      const candidateEmbedding = await compareBackend.embedImage(candidate);
-      comparisons.push(
-        buildTransferComparison(
-          model,
-          originalEmbedding,
-          candidateEmbedding,
-          report.embedding.drift,
-        ),
-      );
-    }
-    report.transfer = buildTransferReport(
-      modelFromBackendId(backend.id),
-      report.embedding.drift,
-      comparisons,
-    );
-  }
-
-  if (options.out) {
-    await writeFile(options.out, serializeEmbeddingReport(report), "utf-8");
-  }
-  if (options.html) {
-    await writeFile(options.html, renderEmbeddingHtmlReport(report), "utf-8");
-  }
-
-  return report;
 }
 
 export async function aiAuditCommand(options: AiAuditOptions): Promise<void> {

@@ -1,7 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { extname } from "node:path";
-import { extractWatermark, parseSidecar, type SidecarMetadata } from "@openartshield/core";
-import { readImage } from "@openartshield/node";
+import type { SidecarMetadata } from "@openartshield/core";
+import { verifyArtwork } from "@openartshield/node";
 import { CliError } from "../utils/errors.js";
 import { failure, info, success } from "../utils/output.js";
 
@@ -17,36 +15,19 @@ export type VerifyResult = {
   checksumValid: boolean;
 };
 
-function defaultSidecarPath(input: string): string {
-  const ext = extname(input);
-  const base = ext ? input.slice(0, -ext.length) : input;
-  return `${base}.openartshield.json`;
-}
-
-// Read the sidecar, use its parameters to extract, and report what came back.
+// Thin wrapper over the @openartshield/node SDK (`verifyArtwork`): the CLI adds
+// the flag hint to the missing-sidecar error and owns terminal output.
 export async function runVerify(options: VerifyOptions): Promise<VerifyResult> {
-  const sidecarPath = options.sidecar ?? defaultSidecarPath(options.input);
-
-  let sidecarJson: string;
   try {
-    sidecarJson = await readFile(sidecarPath, "utf-8");
-  } catch {
-    throw new CliError(`Could not read sidecar at ${sidecarPath}. Pass one with --sidecar.`);
+    return await verifyArtwork(options.input, {
+      ...(options.sidecar !== undefined ? { sidecarPath: options.sidecar } : {}),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Could not read sidecar")) {
+      throw new CliError(`${error.message} Pass one with --sidecar.`);
+    }
+    throw error;
   }
-  const sidecar = parseSidecar(sidecarJson);
-
-  const image = await readImage(options.input);
-  const result = extractWatermark(image, {
-    seed: sidecar.seed,
-    messageLength: sidecar.messageLength,
-    repetitions: sidecar.repetitions,
-  });
-
-  return {
-    sidecar,
-    recoveredMessage: result.recoveredMessage,
-    checksumValid: result.checksumValid,
-  };
 }
 
 export async function verifyCommand(options: VerifyOptions): Promise<void> {
