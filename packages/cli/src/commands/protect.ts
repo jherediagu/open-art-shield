@@ -1,43 +1,25 @@
-import { writeFile } from "node:fs/promises";
-import { extname } from "node:path";
 import {
   DEFAULT_PROTECTION_PROFILE,
-  DEFAULT_REPETITIONS,
-  DEFAULT_STRENGTH,
-  EOT_TRANSFORM_NAMES,
   PROTECTION_PROFILE_NAMES,
   PROTECTION_PROFILES,
-  buildSidecar,
-  embedWatermark,
-  estimateCapacity,
   isProtectionProfileName,
-  messageByteLength,
-  renderCloakHtmlReport,
-  renderHtmlReport,
-  resolveEotMode,
-  runCloak,
-  serializeCloakReport,
-  serializeReport,
-  serializeSidecar,
   type AuditReport,
   type CloakReport,
   type EmbeddingAuditReport,
-  type PixelImage,
   type ProtectionProfile,
   type SidecarMetadata,
 } from "@openartshield/core";
 import {
-  auditProtectedImage,
-  defaultTransforms,
-  readImage,
-  selectTransforms,
-  writeImage,
+  protectArtwork,
+  type ProtectArtworkResult,
+  type ProtectArtworkTraceResult,
 } from "@openartshield/node";
-import { resolveEmbeddingBackend, resolveScoreBackends } from "../utils/backend.js";
 import { CliError } from "../utils/errors.js";
 import { CLI_VERSION, failure, info, success } from "../utils/output.js";
-import { runAiAudit } from "./ai-audit.js";
-import { runVerify } from "./verify.js";
+
+// Thin wrappers over the @openartshield/node SDK (`protectArtwork`): the CLI
+// owns flag parsing, CliError texts, and terminal output; the orchestration
+// lives in the node package so SDK consumers get the same workflow.
 
 export type ProtectOptions = {
   input: string;
@@ -62,12 +44,6 @@ export type ProtectOptions = {
   storeMessage?: boolean;
   /** ISO timestamp for the sidecar; injected for deterministic tests. */
   now?: string;
-  /**
-   * Pre-processed pixels to embed into instead of re-reading `input` (used by
-   * the profile workflow to watermark the cloaked image). `input` is still
-   * recorded as the original file in the sidecar.
-   */
-  sourceImage?: PixelImage;
 };
 
 export type ProtectResult = {
@@ -79,90 +55,6 @@ export type ProtectResult = {
   sidecar?: SidecarMetadata;
   messageBytes: number;
 };
-
-/** Drop a path's extension and append `suffix`, e.g. protected.png -> protected.audit.json. */
-function withSuffix(outPath: string, suffix: string): string {
-  const ext = extname(outPath);
-  const base = ext ? outPath.slice(0, -ext.length) : outPath;
-  return base + suffix;
-}
-
-/**
- * The one-command Trace + Audit workflow: capacity check -> embed -> audit ->
- * reports -> sidecar. Fails early (before embedding) if the message doesn't fit.
- */
-export async function runProtect(options: ProtectOptions): Promise<ProtectResult> {
-  if (!options.message) {
-    throw new CliError("A non-empty --message is required.");
-  }
-
-  const repetitions = options.repetitions ?? DEFAULT_REPETITIONS;
-  const strength = options.strength ?? DEFAULT_STRENGTH;
-  const messageBytes = messageByteLength(options.message);
-
-  const image = options.sourceImage ?? (await readImage(options.input));
-
-  // Capacity check first, so we never write a half-baked image.
-  const capacity = estimateCapacity({
-    width: image.width,
-    height: image.height,
-    messageByteLength: messageBytes,
-    repetitions,
-  });
-  if (!capacity.fits) {
-    throw new CliError(
-      `Message does not fit: needs ${capacity.requiredBlocks} blocks but the image has ` +
-        `${capacity.availableBlocks}. At ${repetitions}x repetitions the maximum message is ` +
-        `${capacity.maxMessageBytes} bytes (got ${messageBytes}). Use a larger image, a shorter ` +
-        `message, or fewer repetitions.`,
-    );
-  }
-
-  const { image: protectedImage } = embedWatermark(image, {
-    message: options.message,
-    seed: options.seed,
-    strength,
-    repetitions,
-  });
-  await writeImage(protectedImage, options.out);
-
-  const report = await auditProtectedImage(protectedImage, {
-    message: options.message,
-    seed: options.seed,
-    strength,
-    repetitions,
-    imagePath: options.out,
-  });
-
-  const jsonPath = options.json ?? withSuffix(options.out, ".audit.json");
-  await writeFile(jsonPath, serializeReport(report), "utf-8");
-
-  let htmlPath: string | undefined;
-  if (options.html) {
-    htmlPath = options.html === true ? withSuffix(options.out, ".audit.html") : options.html;
-    await writeFile(htmlPath, renderHtmlReport(report), "utf-8");
-  }
-
-  let sidecarPath: string | undefined;
-  let sidecar: SidecarMetadata | undefined;
-  if (!options.noSidecar) {
-    sidecar = buildSidecar({
-      version: CLI_VERSION,
-      seed: options.seed,
-      messageLength: messageBytes,
-      repetitions,
-      strength,
-      createdAt: options.now ?? new Date().toISOString(),
-      originalFile: options.input,
-      protectedFile: options.out,
-      ...(options.storeMessage ? { message: options.message } : {}),
-    });
-    sidecarPath = options.sidecar ?? withSuffix(options.out, ".openartshield.json");
-    await writeFile(sidecarPath, serializeSidecar(sidecar), "utf-8");
-  }
-
-  return { outPath: options.out, jsonPath, htmlPath, sidecarPath, report, sidecar, messageBytes };
-}
 
 export type ProtectWorkflowOptions = ProtectOptions & {
   /** Protection profile (default "creator-balanced" = classic protect behavior). */
@@ -186,26 +78,44 @@ export type ProtectWorkflowOptions = ProtectOptions & {
 export type ProtectWorkflowResult = {
   profile: ProtectionProfile;
   protect: ProtectResult;
-  /** Present when the profile runs the cloak layer. */
   cloak?: {
     report: CloakReport;
-    /** Whether the cloak actually improved drift and was baked into the output. */
     applied: boolean;
     jsonPath: string;
     htmlPath?: string;
   };
-  /** Present when the profile runs the measure (ai-audit) layer. */
   aiAudit?: {
     report: EmbeddingAuditReport;
     jsonPath: string;
     htmlPath?: string;
   };
-  /** Present when the profile verifies the output against its sidecar. */
   verification?: {
     checksumValid: boolean;
     recoveredMessage: string | null;
   };
 };
+
+function toProtectResult(p: ProtectArtworkTraceResult): ProtectResult {
+  return {
+    outPath: p.outputPath,
+    jsonPath: p.jsonPath,
+    htmlPath: p.htmlPath,
+    sidecarPath: p.sidecarPath,
+    report: p.report,
+    sidecar: p.sidecar,
+    messageBytes: p.messageBytes,
+  };
+}
+
+function toWorkflowResult(r: ProtectArtworkResult): ProtectWorkflowResult {
+  return {
+    profile: r.profile,
+    protect: toProtectResult(r.protect),
+    cloak: r.cloak,
+    aiAudit: r.aiAudit,
+    verification: r.verification,
+  };
+}
 
 function resolveProfileOrFail(name: string | undefined): ProtectionProfile {
   const value = name ?? DEFAULT_PROTECTION_PROFILE;
@@ -217,94 +127,49 @@ function resolveProfileOrFail(name: string | undefined): ProtectionProfile {
   return PROTECTION_PROFILES[value];
 }
 
-/**
- * Profile-driven protection bundle. Layer order:
- *
- *   cloak (optional) -> watermark + sidecar -> robustness audit
- *     -> verify (optional) -> ai-audit (optional)
- *
- * The cloak runs *before* watermarking so the watermark is embedded last and
- * stays verifiable; the ai-audit then measures the original against the final
- * written output. If the cloak finds no improving candidate, the workflow
- * continues with the unmodified original and reports that honestly.
- */
+async function callProtectArtwork(
+  options: ProtectWorkflowOptions,
+  profile: string,
+): Promise<ProtectArtworkResult> {
+  if (!options.message) {
+    throw new CliError("A non-empty --message is required.");
+  }
+  return protectArtwork(options.input, {
+    profile,
+    message: options.message,
+    seed: options.seed,
+    outputPath: options.out,
+    strength: options.strength,
+    repetitions: options.repetitions,
+    jsonPath: options.json,
+    html: options.html,
+    sidecarPath: options.sidecar,
+    noSidecar: options.noSidecar,
+    storeMessage: options.storeMessage,
+    now: options.now,
+    sidecarVersion: CLI_VERSION,
+    backend: options.backend,
+    model: options.model,
+    scoreModels: options.scoreModels,
+    compareModels: options.compareModels,
+    eot: options.eot,
+    cloakStrength: options.cloakStrength,
+    steps: options.steps,
+  });
+}
+
+/** Classic Trace + Audit workflow (equivalent to --profile creator-balanced). */
+export async function runProtect(options: ProtectOptions): Promise<ProtectResult> {
+  const r = await callProtectArtwork(options, "creator-balanced");
+  return toProtectResult(r.protect);
+}
+
+/** Profile-driven protection bundle. See `protectArtwork` in @openartshield/node. */
 export async function runProtectWorkflow(
   options: ProtectWorkflowOptions,
 ): Promise<ProtectWorkflowResult> {
   const profile = resolveProfileOrFail(options.profile);
-  const { layers } = profile;
-  const htmlEnabled = options.html !== undefined && options.html !== false;
-
-  // Cloak layer: perturb the original before watermarking.
-  let cloak: ProtectWorkflowResult["cloak"];
-  let sourceImage: PixelImage | undefined;
-  if (layers.cloak) {
-    const backend = resolveEmbeddingBackend(options.backend, options.model);
-    const eotMode = resolveEotMode(options.eot ?? "none");
-    const eotTransforms = selectTransforms([...EOT_TRANSFORM_NAMES[eotMode]]);
-    const scoreBackends = resolveScoreBackends(options.backend, options.scoreModels ?? []);
-
-    const original = await readImage(options.input);
-    const { image: cloaked, report } = await runCloak(backend, original, {
-      transforms: defaultTransforms,
-      eotMode,
-      eotTransforms,
-      scoreBackends,
-      inputPath: options.input,
-      outputPath: options.out,
-      seed: options.seed,
-      ...(options.cloakStrength !== undefined ? { strength: options.cloakStrength } : {}),
-      ...(options.steps !== undefined ? { steps: options.steps } : {}),
-    });
-
-    const jsonPath = withSuffix(options.out, ".cloak.json");
-    await writeFile(jsonPath, serializeCloakReport(report), "utf-8");
-    let htmlPath: string | undefined;
-    if (htmlEnabled) {
-      htmlPath = withSuffix(options.out, ".cloak.html");
-      await writeFile(htmlPath, renderCloakHtmlReport(report), "utf-8");
-    }
-
-    // Only bake in the cloak when it actually improved; otherwise watermark the
-    // original and let the report say the cloak found nothing.
-    if (report.result.improved) sourceImage = cloaked;
-    cloak = { report, applied: report.result.improved, jsonPath, htmlPath };
-  }
-
-  // Trace + Audit: watermark (into the cloaked pixels when present) + reports.
-  const protect = await runProtect({
-    ...options,
-    ...(sourceImage !== undefined ? { sourceImage } : {}),
-  });
-
-  // Verify layer: read the sidecar back and confirm the watermark recovers.
-  let verification: ProtectWorkflowResult["verification"];
-  if (layers.verify && protect.sidecarPath) {
-    const verified = await runVerify({ input: options.out, sidecar: protect.sidecarPath });
-    verification = {
-      checksumValid: verified.checksumValid,
-      recoveredMessage: verified.recoveredMessage,
-    };
-  }
-
-  // Measure layer: embedding drift of the final output vs. the original.
-  let aiAudit: ProtectWorkflowResult["aiAudit"];
-  if (layers.measure) {
-    const jsonPath = withSuffix(options.out, ".ai-audit.json");
-    const htmlPath = htmlEnabled ? withSuffix(options.out, ".ai-audit.html") : undefined;
-    const report = await runAiAudit({
-      original: options.input,
-      candidate: options.out,
-      backend: options.backend,
-      model: options.model,
-      compareModels: options.compareModels,
-      out: jsonPath,
-      html: htmlPath,
-    });
-    aiAudit = { report, jsonPath, htmlPath };
-  }
-
-  return { profile, protect, cloak, aiAudit, verification };
+  return toWorkflowResult(await callProtectArtwork(options, profile.name));
 }
 
 export async function protectCommand(options: ProtectWorkflowOptions): Promise<void> {

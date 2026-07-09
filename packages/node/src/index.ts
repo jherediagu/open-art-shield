@@ -47,3 +47,15 @@ export {
   createTransformersEmbeddingBackend,
   type TransformersBackendOptions,
 } from "./ai/transformers-backend.js";
+
+// High-level SDK API: profile-driven protection bundle + companions.
+export { protectArtwork } from "./protect/protect-artwork.js";
+export type {
+  ProtectArtworkOptions,
+  ProtectArtworkResult,
+  ProtectArtworkTraceResult,
+} from "./protect/protect-artwork.js";
+export { verifyArtwork } from "./protect/verify-artwork.js";
+export type { VerifyArtworkOptions, VerifyArtworkResult } from "./protect/verify-artwork.js";
+export { aiAuditArtwork } from "./protect/ai-audit-artwork.js";
+export type { AiAuditArtworkOptions } from "./protect/ai-audit-artwork.js";
