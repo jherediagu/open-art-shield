@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { boundedNoiseCandidate } from "../src/cloak/perturb.js";
+import { boundedNoiseCandidate, mutateCandidate } from "../src/cloak/perturb.js";
 import { runCloak } from "../src/cloak/runner.js";
 import { serializeCloakReport, renderCloakHtmlReport } from "../src/cloak/report.js";
 import { EOT_TRANSFORM_NAMES, eotTransformNames, resolveEotMode } from "../src/cloak/eot.js";
+import { resolveCloakOptimizer } from "../src/cloak/types.js";
 import {
   aggregateAverageDrift,
   aggregateMinModelDrift,
@@ -115,7 +116,7 @@ describe("cloak report", () => {
       maxSsimDrop: 0.5,
     });
     const json = JSON.parse(serializeCloakReport(report));
-    expect(json.version).toBe("0.3.0");
+    expect(json.version).toBe("0.4.0");
     expect(Array.isArray(json.limitations)).toBe(true);
     expect(json.limitations.length).toBeGreaterThan(0);
 
@@ -378,5 +379,98 @@ describe("runCloak multi-model scoring", () => {
     expect(html).toContain("mock:model-a");
     expect(html).toContain("Weakest model drift");
     expect(html).toContain("Aggregate average drift");
+  });
+});
+
+describe("mutateCandidate", () => {
+  it("keeps every mutated channel within strength of the original and preserves alpha", () => {
+    const original = createSyntheticImage(48, 48, 4, 3);
+    const candidate = boundedNoiseCandidate(original, 123, 4, 0);
+    const strength = 4;
+    const mutated = mutateCandidate(original, candidate, 123, strength, 1, 0.5);
+
+    expect(mutated.width).toBe(48);
+    expect(mutated.channels).toBe(4);
+    for (let p = 0; p < original.width * original.height; p++) {
+      const base = p * 4;
+      for (let c = 0; c < 3; c++) {
+        expect(Math.abs(mutated.data[base + c] - original.data[base + c])).toBeLessThanOrEqual(
+          strength,
+        );
+      }
+      expect(mutated.data[base + 3]).toBe(original.data[base + 3]);
+    }
+  });
+
+  it("is deterministic for the same (seed, iteration) and varies across iterations", () => {
+    const original = createSyntheticImage(40, 40, 3, 2);
+    const candidate = boundedNoiseCandidate(original, 7, 6, 0);
+    const a = mutateCandidate(original, candidate, 7, 6, 1, 0.2);
+    const b = mutateCandidate(original, candidate, 7, 6, 1, 0.2);
+    const c = mutateCandidate(original, candidate, 7, 6, 2, 0.2);
+    expect(Array.from(a.data)).toEqual(Array.from(b.data));
+    expect(countDifferences(a, c)).toBeGreaterThan(0);
+  });
+});
+
+describe("cloak optimizer", () => {
+  it("resolves valid optimizers and fails clearly on an unknown one", () => {
+    expect(resolveCloakOptimizer("random")).toBe("random");
+    expect(resolveCloakOptimizer("greedy")).toBe("greedy");
+    expect(() => resolveCloakOptimizer("annealing")).toThrow(/Unknown cloak optimizer "annealing"/);
+    expect(() => resolveCloakOptimizer("annealing")).toThrow(/random, greedy/);
+  });
+
+  it("defaults to random and records the optimizer in the report", async () => {
+    const img = createSyntheticImage(96, 96, 3, 3);
+    const { report } = await runCloak(backend, img, {
+      strength: 8,
+      steps: 4,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+    });
+    expect(report.parameters.optimizer).toBe("random");
+    expect(report.result.acceptedImprovements).toBeGreaterThanOrEqual(1);
+  });
+
+  it("greedy reaches at least the random score at the same budget and hill-climbs", async () => {
+    const img = createSyntheticImage(96, 96, 3, 6);
+    const config = { strength: 8, steps: 20, minPsnr: 20, maxSsimDrop: 0.5 };
+    const random = await runCloak(backend, img, { ...config, optimizer: "random" });
+    const greedy = await runCloak(backend, img, { ...config, optimizer: "greedy" });
+
+    expect(greedy.report.parameters.optimizer).toBe("greedy");
+    expect(greedy.report.scoring.aggregateAverageDrift).toBeGreaterThanOrEqual(
+      random.report.scoring.aggregateAverageDrift,
+    );
+    expect(greedy.report.result.acceptedImprovements).toBeGreaterThan(1);
+  });
+
+  it("is deterministic for identical greedy runs", async () => {
+    const img = createSyntheticImage(80, 80, 3, 11);
+    const config = {
+      strength: 8,
+      steps: 10,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      optimizer: "greedy" as const,
+    };
+    const a = await runCloak(backend, img, config);
+    const b = await runCloak(backend, img, config);
+    expect(serializeCloakReport(a.report)).toBe(serializeCloakReport(b.report));
+    expect(Array.from(a.image.data)).toEqual(Array.from(b.image.data));
+  });
+
+  it("renders the optimizer in the HTML report", async () => {
+    const img = createSyntheticImage(64, 64, 3, 7);
+    const { report } = await runCloak(backend, img, {
+      strength: 8,
+      steps: 6,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+      optimizer: "greedy",
+    });
+    expect(renderCloakHtmlReport(report)).toContain("Optimizer");
+    expect(renderCloakHtmlReport(report)).toContain("greedy");
   });
 });

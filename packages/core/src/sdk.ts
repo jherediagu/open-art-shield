@@ -10,7 +10,7 @@ export { createMockEmbeddingBackend } from "./ai/mock-backend.js";
 export { serializeEmbeddingReport, renderEmbeddingHtmlReport } from "./ai/report.js";
 export { cosineSimilarity, euclideanDistance, embeddingDrift } from "./ai/metrics.js";
 export { runCloak } from "./cloak/runner.js";
-export { boundedNoiseCandidate } from "./cloak/perturb.js";
+export { boundedNoiseCandidate, mutateCandidate } from "./cloak/perturb.js";
 export { serializeCloakReport, renderCloakHtmlReport } from "./cloak/report.js";
 export { psnr, ssim } from "./metrics/quality.js";
 export {

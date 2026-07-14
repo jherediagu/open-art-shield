@@ -74,6 +74,7 @@ export function renderCloakHtmlReport(report: CloakReport): string {
     <div><b>Input</b>${input.path ? escapeHtml(input.path) + " &middot; " : ""}${input.width}&times;${input.height}</div>
     <div><b>Output</b>${output.path ? escapeHtml(output.path) : "(not written)"}</div>
     <div><b>Strength / steps</b>${parameters.strength} / ${parameters.steps}</div>
+    <div><b>Optimizer</b>${escapeHtml(parameters.optimizer)}</div>
     <div><b>Seed</b>${parameters.seed}</div>
     <div><b>Initial drift</b>${result.initialDrift.toFixed(4)}</div>
     <div><b>Best drift</b>${result.bestDrift.toFixed(4)}</div>

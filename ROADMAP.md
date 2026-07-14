@@ -31,9 +31,10 @@ real CLIP run in [`examples/cloak-eot/`](examples/cloak-eot/README.md). The hone
 current status: OpenArtShield does not yet protect artworks from AI training or
 style mimicry. It embeds/audits watermarks, measures embedding drift, and can
 generate a measurable (but unproven) embedding perturbation scored through
-transforms, and measure whether that drift transfers to other embedding models
-(`oas ai-audit --compare-model`). The next step is replacing the random search
-with a smarter optimizer.
+transforms, measure whether that drift transfers to other embedding models
+(`oas ai-audit --compare-model`), and search for it with either random sampling
+or a greedy hill-climber (`oas cloak --optimizer greedy`). The next steps are
+stronger optimizers and testing transfer beyond the CLIP family.
 
 ## v0.1 - Current foundation
 
@@ -118,7 +119,7 @@ Planned improvements:
 - Add EOT-based robustness: score the cloak _through_ JPEG/resize/blur/screenshot transforms. _(done - `oas cloak --eot`, see [`examples/cloak-eot/`](examples/cloak-eot/README.md))_
 - Measure whether cloak drift transfers to other embedding models (avoid overfitting to one CLIP variant). _(done - `oas ai-audit --compare-model`)_
 - Score cloak candidates across multiple embedding models during the search. _(done - `oas cloak --score-model`)_
-- Replace random search with a smarter optimizer.
+- Replace random search with a smarter optimizer. _(started - `oas cloak --optimizer greedy`)_
 - Study Glaze/Mist-style research directions.
 - Add benchmark datasets where licensing allows.
 - Clearly document known limitations and failure modes. _(done)_

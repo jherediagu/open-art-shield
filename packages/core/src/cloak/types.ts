@@ -12,13 +12,35 @@ import type { CloakModelScore } from "./scoring.js";
 // transform suite. A higher drift score only means the selected backend changed
 // more under the measured conditions - nothing more.
 
-export const CLOAK_REPORT_VERSION = "0.3.0";
+export const CLOAK_REPORT_VERSION = "0.4.0";
 
 export const DEFAULT_CLOAK_STRENGTH = 4;
 export const DEFAULT_CLOAK_STEPS = 8;
 export const DEFAULT_CLOAK_SEED = 123;
 export const DEFAULT_CLOAK_MIN_PSNR = 38;
 export const DEFAULT_CLOAK_MAX_SSIM_DROP = 0.02;
+
+/** Candidate search strategy. "random" keeps the original independent-sampling
+ * behavior; "greedy" hill-climbs by mutating the best candidate so far. */
+export type CloakOptimizer = "random" | "greedy";
+export const CLOAK_OPTIMIZERS: readonly CloakOptimizer[] = ["random", "greedy"];
+export const DEFAULT_CLOAK_OPTIMIZER: CloakOptimizer = "random";
+/** Fraction of pixels the greedy optimizer re-samples per mutation step. */
+export const DEFAULT_CLOAK_MUTATION_RATE = 0.1;
+
+export function isCloakOptimizer(value: string): value is CloakOptimizer {
+  return (CLOAK_OPTIMIZERS as readonly string[]).includes(value);
+}
+
+/** Validate an optimizer name, throwing a clear error listing the valid names. */
+export function resolveCloakOptimizer(value: string): CloakOptimizer {
+  if (!isCloakOptimizer(value)) {
+    throw new Error(
+      `Unknown cloak optimizer "${value}". Use one of: ${CLOAK_OPTIMIZERS.join(", ")}.`,
+    );
+  }
+  return value;
+}
 
 export const CLOAK_LIMITATIONS: readonly string[] = [
   "This is an experimental embedding-space perturbation.",
@@ -58,6 +80,10 @@ export type CloakConfig = {
    * instances so core stays free of model loading.
    */
   scoreBackends?: EmbeddingBackend[];
+  /** Candidate search strategy (default "random"). */
+  optimizer?: CloakOptimizer;
+  /** Fraction of pixels re-sampled per greedy mutation (default 0.1). */
+  mutationRate?: number;
   inputPath?: string;
   outputPath?: string;
 };
@@ -73,6 +99,8 @@ export type CloakReport = {
     seed: number;
     minPsnr: number;
     maxSsimDrop: number;
+    /** Candidate search strategy used. */
+    optimizer: CloakOptimizer;
   };
   result: {
     /** Whether any candidate beat the original's drift while passing quality limits. */
@@ -84,6 +112,8 @@ export type CloakReport = {
     ssim: number;
     /** How many candidates were rejected by the quality guardrails. */
     candidatesRejected: number;
+    /** How many times the search accepted a better candidate (>=1 when improved). */
+    acceptedImprovements: number;
   };
   /**
    * EOT (Expectation Over Transformation) summary for the chosen image. When mode

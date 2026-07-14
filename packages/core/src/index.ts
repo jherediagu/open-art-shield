@@ -88,8 +88,13 @@ export {
   DEFAULT_CLOAK_SEED,
   DEFAULT_CLOAK_MIN_PSNR,
   DEFAULT_CLOAK_MAX_SSIM_DROP,
+  DEFAULT_CLOAK_OPTIMIZER,
+  DEFAULT_CLOAK_MUTATION_RATE,
+  CLOAK_OPTIMIZERS,
+  isCloakOptimizer,
+  resolveCloakOptimizer,
 } from "./cloak/types.js";
-export type { CloakConfig, CloakReport, CloakResult } from "./cloak/types.js";
+export type { CloakConfig, CloakReport, CloakResult, CloakOptimizer } from "./cloak/types.js";
 export {
   EOT_MODES,
   DEFAULT_EOT_MODE,

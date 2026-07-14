@@ -178,6 +178,7 @@ export function buildCli() {
     .option("--eot <mode>", 'Cloak EOT mode: "none" (default), "mild", or "standard"')
     .option("--cloak-strength <number>", "Max per-channel pixel change for the cloak (default 4)")
     .option("--steps <number>", "Number of cloak candidate perturbations (default 8)")
+    .option("--optimizer <name>", 'Cloak search strategy: "random" (default) or "greedy"')
     .example(
       '  oas protect input.png --message "artist=demo" --seed 123 --out protected.png --html',
     )
@@ -210,6 +211,7 @@ export function buildCli() {
         eot: typeof options.eot === "string" ? options.eot : undefined,
         cloakStrength: optionalNumber(options.cloakStrength, "--cloak-strength"),
         steps: optionalInt(options.steps, "--steps"),
+        optimizer: typeof options.optimizer === "string" ? options.optimizer : undefined,
       });
     });
 
@@ -241,6 +243,8 @@ export function buildCli() {
       "--score-model <id>",
       "Also score candidates on this model (repeatable; mock backend uses deterministic variants)",
     )
+    .option("--optimizer <name>", 'Search strategy: "random" (default) or "greedy"')
+    .option("--mutation-rate <number>", "Fraction of pixels re-sampled per greedy mutation (0.1)")
     .option("--out <path>", "Output path for the cloaked image")
     .option("--report <path>", "Path to write the JSON cloak report")
     .option("--html <path>", "Also write a standalone HTML report")
@@ -248,12 +252,14 @@ export function buildCli() {
       "  oas cloak artwork.png --backend clip --strength 4 --steps 12 --eot standard --out artwork.cloaked.png --report cloak.json",
     )
     .example(
-      "  oas cloak artwork.png --backend clip --score-model Xenova/clip-vit-base-patch16 --eot standard --out artwork.cloaked.png",
+      "  oas cloak artwork.png --backend clip --optimizer greedy --steps 40 --eot standard --out artwork.cloaked.png",
     )
     .action(async (input: string, options: Record<string, unknown>) => {
       await cloakCommand({
         input,
         out: requiredString(options.out, "--out"),
+        optimizer: typeof options.optimizer === "string" ? options.optimizer : undefined,
+        mutationRate: optionalNumber(options.mutationRate, "--mutation-rate"),
         backend: typeof options.backend === "string" ? options.backend : undefined,
         model: typeof options.model === "string" ? options.model : undefined,
         scoreModels: optionalStringList(options.scoreModel, "--score-model"),
