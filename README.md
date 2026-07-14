@@ -567,6 +567,31 @@ does not prove protection against AI training or style mimicry - it only means
 the selected perturbation was optimized against the configured scoring models and
 measured under the configured transforms.
 
+#### Search strategy (`--optimizer`)
+
+By default the cloak evaluates each of `--steps` candidates independently and
+keeps the best (`--optimizer random`). `--optimizer greedy` instead seeds with
+one random candidate and then hill-climbs: each subsequent candidate mutates a
+small fraction of pixels (`--mutation-rate`, default 0.1) of the best so far, and
+is kept only if its aggregate score improves. Both strategies evaluate the same
+number of candidates, so their cost is comparable; greedy tends to reach a higher
+drift at the same visual budget because it builds on progress instead of starting
+from scratch each step.
+
+```bash
+oas cloak artwork.png \
+  --backend clip \
+  --optimizer greedy \
+  --steps 40 \
+  --eot standard \
+  --out artwork.cloaked.png \
+  --report artwork.cloak.json
+```
+
+The report records `parameters.optimizer` and `result.acceptedImprovements`. A
+stronger search finds more drift, but the honesty is unchanged: more drift is a
+measurement, not protection.
+
 It only writes a cloaked image when a candidate actually improved drift within
 the quality limits; otherwise it tells you so and writes nothing misleading. The
 `mock` backend is the default for tests but is **not meaningful** for real

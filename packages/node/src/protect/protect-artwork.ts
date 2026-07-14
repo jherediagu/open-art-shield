@@ -14,6 +14,7 @@ import {
   messageByteLength,
   renderCloakHtmlReport,
   renderHtmlReport,
+  resolveCloakOptimizer,
   resolveEotMode,
   runCloak,
   serializeCloakReport,
@@ -85,6 +86,10 @@ export type ProtectArtworkOptions = {
   cloakStrength?: number;
   /** Number of cloak candidate perturbations (default 8). */
   steps?: number;
+  /** Cloak search strategy: "random" (default) or "greedy". */
+  optimizer?: string;
+  /** Fraction of pixels re-sampled per greedy mutation (default 0.1). */
+  mutationRate?: number;
 };
 
 export type ProtectArtworkTraceResult = {
@@ -251,6 +256,7 @@ export async function protectArtwork(
     const eotMode = resolveEotMode(options.eot ?? "none");
     const eotTransforms = selectTransforms([...EOT_TRANSFORM_NAMES[eotMode]]);
     const scoreBackends = resolveScoreBackends(options.backend, options.scoreModels ?? []);
+    const optimizer = resolveCloakOptimizer(options.optimizer ?? "random");
 
     const original = await readImage(inputPath);
     const { image: cloaked, report } = await runCloak(backend, original, {
@@ -258,11 +264,13 @@ export async function protectArtwork(
       eotMode,
       eotTransforms,
       scoreBackends,
+      optimizer,
       inputPath,
       outputPath: options.outputPath,
       seed: options.seed,
       ...(options.cloakStrength !== undefined ? { strength: options.cloakStrength } : {}),
       ...(options.steps !== undefined ? { steps: options.steps } : {}),
+      ...(options.mutationRate !== undefined ? { mutationRate: options.mutationRate } : {}),
     });
 
     const jsonPath = withSuffix(options.outputPath, ".cloak.json");

@@ -4,7 +4,7 @@ import { mean } from "../utils/math.js";
 import { embeddingDrift } from "../ai/metrics.js";
 import type { Embedding, EmbeddingBackend } from "../ai/types.js";
 import type { PixelImage } from "../types.js";
-import { boundedNoiseCandidate } from "./perturb.js";
+import { boundedNoiseCandidate, mutateCandidate } from "./perturb.js";
 import { DEFAULT_EOT_MODE } from "./eot.js";
 import { aggregateAverageDrift, aggregateMinModelDrift, type CloakModelScore } from "./scoring.js";
 import {
@@ -12,6 +12,8 @@ import {
   CLOAK_REPORT_VERSION,
   DEFAULT_CLOAK_MAX_SSIM_DROP,
   DEFAULT_CLOAK_MIN_PSNR,
+  DEFAULT_CLOAK_MUTATION_RATE,
+  DEFAULT_CLOAK_OPTIMIZER,
   DEFAULT_CLOAK_SEED,
   DEFAULT_CLOAK_STEPS,
   DEFAULT_CLOAK_STRENGTH,
@@ -28,18 +30,23 @@ function modelName(backend: EmbeddingBackend): string {
 }
 
 /**
- * Experimental embedding cloak via simple seeded random search, with optional
- * EOT (Expectation Over Transformation) and multi-model scoring.
+ * Experimental embedding cloak, with optional EOT (Expectation Over
+ * Transformation) and multi-model scoring, and a choice of search strategy.
  *
- * For each step it generates a bounded-noise candidate and rejects it if it
- * breaks the visual quality guardrails (PSNR/SSIM) - that check happens before
- * any embedding work. Surviving candidates are scored per model: the drift of
- * the clean candidate plus each injected EOT transform of it, averaged. The
- * candidate's aggregate score is the mean of those per-model averages, so with
- * extra score backends the search favors perturbations that move *several*
- * models instead of overfitting to one. A candidate is kept if its aggregate
- * beats the best so far. If nothing improves, the original is returned and
- * `report.result.improved` is false - we never pretend a no-op is a cloak.
+ * For each of `steps` candidates it applies the visual quality guardrails
+ * (PSNR/SSIM) before any embedding work, then scores survivors per model: the
+ * drift of the clean candidate plus each injected EOT transform of it, averaged.
+ * The candidate's aggregate score is the mean of those per-model averages, so
+ * with extra score backends the search favors perturbations that move *several*
+ * models instead of overfitting to one.
+ *
+ * The `optimizer` controls how candidates are generated. "random" (default)
+ * samples each candidate independently. "greedy" seeds with one random candidate
+ * and then hill-climbs: each subsequent candidate is a mutation of the best so
+ * far, accepted only if its aggregate score improves. Both evaluate the same
+ * number of candidates, so their embedding cost is comparable. If nothing
+ * improves, the original is returned and `report.result.improved` is false - we
+ * never pretend a no-op is a cloak.
  *
  * Pure with respect to IO: backends and transforms are injected.
  */
@@ -58,6 +65,8 @@ export async function runCloak(
   const eotTransforms = config.eotTransforms ?? [];
   const scoreBackends = config.scoreBackends ?? [];
   const allBackends = [backend, ...scoreBackends];
+  const optimizer = config.optimizer ?? DEFAULT_CLOAK_OPTIMIZER;
+  const mutationRate = config.mutationRate ?? DEFAULT_CLOAK_MUTATION_RATE;
 
   // Count every embedding evaluation (across all models) for honest cost reporting.
   let embeddingEvaluations = 0;
@@ -116,9 +125,16 @@ export async function runCloak(
   let bestSsim = 1;
   let improved = false;
   let candidatesRejected = 0;
+  let acceptedImprovements = 0;
 
+  // Both strategies evaluate `steps` candidates, so their cost is comparable.
+  // "random" samples every candidate independently; "greedy" seeds with one
+  // random candidate and then hill-climbs by mutating the best so far.
   for (let step = 0; step < steps; step++) {
-    const candidate = boundedNoiseCandidate(image, seed, strength, step);
+    const candidate =
+      optimizer === "greedy" && step > 0
+        ? mutateCandidate(image, best, seed, strength, step, mutationRate)
+        : boundedNoiseCandidate(image, seed, strength, step);
 
     const candidatePsnr = psnr(image, candidate);
     const candidateSsim = ssim(image, candidate);
@@ -136,6 +152,7 @@ export async function runCloak(
       bestPsnr = Number.isFinite(candidatePsnr) ? candidatePsnr : null;
       bestSsim = candidateSsim;
       improved = true;
+      acceptedImprovements += 1;
     }
   }
 
@@ -168,7 +185,7 @@ export async function runCloak(
         id: backend.id,
         ...(model !== undefined ? { model } : {}),
       },
-      parameters: { strength, steps, seed, minPsnr, maxSsimDrop },
+      parameters: { strength, steps, seed, minPsnr, maxSsimDrop, optimizer },
       result: {
         improved,
         initialDrift,
@@ -176,6 +193,7 @@ export async function runCloak(
         psnr: improved ? bestPsnr : null,
         ssim: improved ? bestSsim : 1,
         candidatesRejected,
+        acceptedImprovements,
       },
       eot: {
         mode: eotMode,

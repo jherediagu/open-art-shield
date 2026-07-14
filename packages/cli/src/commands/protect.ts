@@ -73,6 +73,10 @@ export type ProtectWorkflowOptions = ProtectOptions & {
   cloakStrength?: number;
   /** Number of cloak candidate perturbations (default 8). */
   steps?: number;
+  /** Cloak search strategy: "random" (default) or "greedy". */
+  optimizer?: string;
+  /** Fraction of pixels re-sampled per greedy mutation (default 0.1). */
+  mutationRate?: number;
 };
 
 export type ProtectWorkflowResult = {
@@ -155,6 +159,8 @@ async function callProtectArtwork(
     eot: options.eot,
     cloakStrength: options.cloakStrength,
     steps: options.steps,
+    optimizer: options.optimizer,
+    mutationRate: options.mutationRate,
   });
 }
 

@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import {
   EOT_TRANSFORM_NAMES,
   renderCloakHtmlReport,
+  resolveCloakOptimizer,
   resolveEotMode,
   runCloak,
   serializeCloakReport,
@@ -30,6 +31,10 @@ export type CloakOptions = {
   maxSsimDrop?: number;
   /** EOT robustness mode: "none" (default), "mild", or "standard". */
   eot?: string;
+  /** Candidate search strategy: "random" (default) or "greedy". */
+  optimizer?: string;
+  /** Fraction of pixels re-sampled per greedy mutation (default 0.1). */
+  mutationRate?: number;
   report?: string;
   html?: string;
 };
@@ -47,6 +52,8 @@ export async function runCloakCommand(options: CloakOptions): Promise<CloakRunRe
   // Resolve the EOT mode to its transform set (throws clearly on an unknown mode).
   const eotMode = resolveEotMode(options.eot ?? "none");
   const eotTransforms = selectTransforms([...EOT_TRANSFORM_NAMES[eotMode]]);
+  // Validate the optimizer name (throws clearly on an unknown strategy).
+  const optimizer = resolveCloakOptimizer(options.optimizer ?? "random");
 
   const scoreBackends = resolveScoreBackends(options.backend, options.scoreModels ?? []);
 
@@ -57,6 +64,7 @@ export async function runCloakCommand(options: CloakOptions): Promise<CloakRunRe
     eotMode,
     eotTransforms,
     scoreBackends,
+    optimizer,
     inputPath: options.input,
     outputPath: options.out,
     ...(options.strength !== undefined ? { strength: options.strength } : {}),
@@ -64,6 +72,7 @@ export async function runCloakCommand(options: CloakOptions): Promise<CloakRunRe
     ...(options.seed !== undefined ? { seed: options.seed } : {}),
     ...(options.minPsnr !== undefined ? { minPsnr: options.minPsnr } : {}),
     ...(options.maxSsimDrop !== undefined ? { maxSsimDrop: options.maxSsimDrop } : {}),
+    ...(options.mutationRate !== undefined ? { mutationRate: options.mutationRate } : {}),
   });
 
   // Only write the image when we actually improved drift - never pass off the
@@ -105,6 +114,7 @@ export async function cloakCommand(options: CloakOptions): Promise<void> {
   info(
     `EOT mode: ${eot.mode} (${eot.transforms.length} variant(s), ${eot.embeddingEvaluations} evals)`,
   );
+  info(`Optimizer: ${parameters.optimizer}`);
   info(`Steps: ${parameters.steps}`);
   info(`Strength: ${parameters.strength}`);
   info("");
@@ -112,6 +122,7 @@ export async function cloakCommand(options: CloakOptions): Promise<void> {
   info(`Best drift (clean, primary): ${result.bestDrift.toFixed(4)}`);
   info(`Best aggregate drift: ${scoring.aggregateAverageDrift.toFixed(4)}`);
   info(`Weakest model drift: ${scoring.aggregateMinModelDrift.toFixed(4)}`);
+  info(`Accepted improvements: ${result.acceptedImprovements}`);
   info(
     `EOT drift (primary) - clean: ${eot.cleanDrift.toFixed(4)}  avg: ${eot.averageDrift.toFixed(4)}  min: ${eot.minDrift.toFixed(4)}`,
   );

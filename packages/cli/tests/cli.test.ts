@@ -514,7 +514,7 @@ describe("oas cloak", () => {
     expect(await exists(out)).toBe(true);
 
     const onDisk = JSON.parse(await readFile(reportPath, "utf-8"));
-    expect(onDisk.version).toBe("0.3.0");
+    expect(onDisk.version).toBe("0.4.0");
     expect(Array.isArray(onDisk.limitations)).toBe(true);
     // Default run uses EOT mode "none" (clean-only scoring).
     expect(onDisk.eot.mode).toBe("none");
@@ -573,6 +573,33 @@ describe("oas cloak", () => {
       "gaussian_blur_0_75",
       "screenshot_simulation",
     ]);
+  });
+
+  it("runs the greedy optimizer and records it in the report", async () => {
+    const { report } = await runCloakCommand({
+      input: inputPath,
+      out: join(dir, "cloaked-greedy.png"),
+      backend: "mock",
+      optimizer: "greedy",
+      strength: 8,
+      steps: 6,
+      minPsnr: 20,
+      maxSsimDrop: 0.5,
+    });
+    expect(report.parameters.optimizer).toBe("greedy");
+    expect(report.result.acceptedImprovements).toBeGreaterThanOrEqual(1);
+  });
+
+  it("fails clearly on an unknown optimizer", async () => {
+    await expect(
+      runCloakCommand({
+        input: inputPath,
+        out: join(dir, "cloaked-bad-opt.png"),
+        backend: "mock",
+        optimizer: "annealing",
+        steps: 1,
+      }),
+    ).rejects.toThrow(/Unknown cloak optimizer "annealing"/);
   });
 
   it("fails clearly on an unknown eot mode", async () => {
