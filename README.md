@@ -49,6 +49,7 @@ listed below.
 - [Getting started](./docs/GETTING_STARTED.md)
 - [Demo guide](./docs/DEMO.md)
 - [Architecture overview](./docs/ARCHITECTURE.md)
+- [Research landscape](./docs/RESEARCH.md)
 - [Roadmap](./ROADMAP.md)
 
 ---
@@ -606,6 +607,33 @@ that drift survived the transform suite.
 > protected from all AI systems. It only means the selected embedding backend
 > changed more under the measured conditions. Always evaluate the output with
 > `oas ai-audit` and the robustness report, and treat everything as experimental.
+
+### Attack audit (does the cloak survive removal?)
+
+The published robustness studies are blunt: perturbation-based protections can be
+stripped by cheap, off-the-shelf attacks - **noisy upscaling** (Honig et al.,
+ICLR 2025), aggressive JPEG, and diffusion/autoencoder **purification** (IMPRESS,
+NeurIPS 2023). `oas attack` measures, honestly, how much of a cloak's embedding
+drift **survives** those attacks instead of assuming it holds.
+
+```bash
+oas attack artwork.png artwork.cloaked.png \
+  --backend clip \
+  --out attack.json \
+  --html attack.html
+```
+
+For each attack it applies the attack to the cloaked image, re-embeds, and
+reports the drift that remains and a **survival ratio** (`drift after / drift
+before`; null when the cloak produced no drift). A survival ratio near `0` means
+the attack removed the cloak; near `1` means it resisted **these** attacks. The
+report also gives the worst-case (minimum) survival across the suite.
+
+The attacks are deliberately simple CPU proxies for the published methods (the
+purification attack is an image-processing stand-in, not a real diffusion model),
+and `--attacks none` runs the audit with no attacks. This is a measurement layer,
+not a defense: a low survival ratio is evidence the protection was removed. See
+[`docs/RESEARCH.md`](docs/RESEARCH.md) for the sources and where this fits.
 
 ### Print the version
 

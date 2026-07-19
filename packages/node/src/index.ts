@@ -39,6 +39,23 @@ export {
   composeTransforms,
 } from "./transforms/pipeline.js";
 
+// Adversarial removal attacks (for the attack-audit / robustness layer).
+export {
+  noisyUpscale,
+  aggressiveJpeg,
+  gaussianPurify,
+  noisyUpscaleAttack,
+  jpegQuality50Attack,
+  jpegQuality30Attack,
+  gaussianPurifyAttack,
+  defaultAttacks,
+  attacksByName,
+  ATTACK_SET_NAMES,
+  isAttackSetName,
+  resolveAttackSet,
+  type AttackSetName,
+} from "./transforms/attacks.js";
+
 // Audit.
 export { auditProtectedImage, embedAndAudit } from "./audit/node-audit-runner.js";
 

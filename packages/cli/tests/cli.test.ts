@@ -6,6 +6,7 @@ import { messageByteLength } from "@openartshield/core";
 import { defaultTransforms, writeImage } from "@openartshield/node";
 import { runEmbed } from "../src/commands/embed.js";
 import { runAiAudit } from "../src/commands/ai-audit.js";
+import { runAttack } from "../src/commands/attack.js";
 import { runCloakCommand } from "../src/commands/cloak.js";
 import { runExtract } from "../src/commands/extract.js";
 import { runAuditCommand } from "../src/commands/audit.js";
@@ -222,6 +223,45 @@ describe("oas ai-audit", () => {
         compareModels: ["Xenova/clip-vit-base-patch16"],
       }),
     ).rejects.toThrow(/@huggingface\/transformers/);
+  });
+});
+
+describe("oas attack", () => {
+  it("measures cloak survival across the standard attack set (mock backend)", async () => {
+    const outPath = join(dir, "attack.json");
+    const report = await runAttack({
+      original: inputPath,
+      candidate: inputPath,
+      backend: "mock",
+      out: outPath,
+    });
+    expect(report.backend).toBe("mock");
+    expect(report.results.length).toBeGreaterThan(0);
+    // Every attack in the report has a name and a numeric drift-after.
+    for (const r of report.results) {
+      expect(typeof r.attack).toBe("string");
+      expect(typeof r.driftAfter).toBe("number");
+    }
+    const onDisk = JSON.parse(await readFile(outPath, "utf-8"));
+    expect(onDisk.version).toBe("0.1.0");
+    expect(Array.isArray(onDisk.limitations)).toBe(true);
+  });
+
+  it("runs no attacks with the 'none' set", async () => {
+    const report = await runAttack({
+      original: inputPath,
+      candidate: inputPath,
+      backend: "mock",
+      attacks: "none",
+    });
+    expect(report.results).toEqual([]);
+    expect(report.summary.attacksTested).toBe(0);
+  });
+
+  it("fails clearly on an unknown attack set", async () => {
+    await expect(
+      runAttack({ original: inputPath, candidate: inputPath, backend: "mock", attacks: "brutal" }),
+    ).rejects.toThrow(/Unknown attack set "brutal"/);
   });
 });
 
