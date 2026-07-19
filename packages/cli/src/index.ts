@@ -5,6 +5,7 @@ import { embedCommand } from "./commands/embed.js";
 import { extractCommand } from "./commands/extract.js";
 import { auditCommand } from "./commands/audit.js";
 import { aiAuditCommand } from "./commands/ai-audit.js";
+import { attackCommand } from "./commands/attack.js";
 import { cloakCommand } from "./commands/cloak.js";
 import { capacityCommand } from "./commands/capacity.js";
 import { protectCommand } from "./commands/protect.js";
@@ -150,6 +151,31 @@ export function buildCli() {
         model: typeof options.model === "string" ? options.model : undefined,
         compareModels: optionalStringList(options.compareModel, "--compare-model"),
         prompt: typeof options.prompt === "string" ? options.prompt : undefined,
+        out: typeof options.out === "string" ? options.out : undefined,
+        html: typeof options.html === "string" ? options.html : undefined,
+      });
+    });
+
+  cli
+    .command(
+      "attack <original> <candidate>",
+      "Measure how much cloak drift survives removal attacks",
+    )
+    .option("--backend <id>", 'Embedding backend: "mock" (default) or "clip"')
+    .option("--model <id>", "Model id for the clip backend")
+    .option("--attacks <set>", 'Attack set: "standard" (default) or "none"')
+    .option("--out <path>", "Path to write the JSON report")
+    .option("--html <path>", "Also write a standalone HTML report")
+    .example(
+      "  oas attack original.png cloaked.png --backend clip --out attack.json --html attack.html",
+    )
+    .action(async (original: string, candidate: string, options: Record<string, unknown>) => {
+      await attackCommand({
+        original,
+        candidate,
+        backend: typeof options.backend === "string" ? options.backend : undefined,
+        model: typeof options.model === "string" ? options.model : undefined,
+        attacks: typeof options.attacks === "string" ? options.attacks : undefined,
         out: typeof options.out === "string" ? options.out : undefined,
         html: typeof options.html === "string" ? options.html : undefined,
       });

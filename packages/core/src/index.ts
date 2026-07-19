@@ -79,6 +79,15 @@ export {
 } from "./ai/transfer.js";
 export type { TransferComparison, TransferSummary, TransferReport } from "./ai/transfer.js";
 
+// Adversarial removal-attack audit (runAttackAudit etc. are on the SDK surface above).
+export { ATTACK_REPORT_VERSION, ATTACK_LIMITATIONS } from "./attack/types.js";
+export type {
+  AttackAuditConfig,
+  AttackAuditReport,
+  AttackResult,
+  RemovalAttack,
+} from "./attack/types.js";
+
 // Experimental embedding cloak (runCloak etc. are on the SDK surface above).
 export {
   CLOAK_REPORT_VERSION,

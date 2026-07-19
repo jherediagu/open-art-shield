@@ -120,7 +120,9 @@ Planned improvements:
 - Measure whether cloak drift transfers to other embedding models (avoid overfitting to one CLIP variant). _(done - `oas ai-audit --compare-model`)_
 - Score cloak candidates across multiple embedding models during the search. _(done - `oas cloak --score-model`)_
 - Replace random search with a smarter optimizer. _(started - `oas cloak --optimizer greedy`)_
-- Study Glaze/Mist-style research directions.
+- Measure how much of a cloak survives published removal attacks (noisy upscaling, JPEG, purification). _(done - `oas attack`, see [`docs/RESEARCH.md`](docs/RESEARCH.md))_
+- Study Glaze/Mist-style research directions. _(surveyed - see [`docs/RESEARCH.md`](docs/RESEARCH.md))_
+- Move the cloak from the CLIP proxy toward the diffusion VAE latent surface.
 - Add benchmark datasets where licensing allows.
 - Clearly document known limitations and failure modes. _(done)_
 

@@ -12,6 +12,8 @@ export { cosineSimilarity, euclideanDistance, embeddingDrift } from "./ai/metric
 export { runCloak } from "./cloak/runner.js";
 export { boundedNoiseCandidate, mutateCandidate } from "./cloak/perturb.js";
 export { serializeCloakReport, renderCloakHtmlReport } from "./cloak/report.js";
+export { runAttackAudit, survivalRatio } from "./attack/runner.js";
+export { serializeAttackReport, renderAttackHtmlReport } from "./attack/report.js";
 export { psnr, ssim } from "./metrics/quality.js";
 export {
   bitAccuracy,
