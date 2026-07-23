@@ -11,16 +11,17 @@ import {
 import { readImage } from "../io/read-image.js";
 import { defaultTransforms } from "../transforms/pipeline.js";
 import { resolveBackend, modelFromBackendId } from "./backends.js";
-import { createTransformersEmbeddingBackend } from "../ai/transformers-backend.js";
 
 export type AiAuditArtworkOptions = {
-  /** Embedding backend: "mock" (default) or "clip". */
+  /** Embedding backend: "mock" (default), "clip", or "vae". */
   backend?: string;
-  /** Model id for the clip backend (default Xenova/clip-vit-base-patch32). */
+  /** Model id for the clip/vae backend. */
   model?: string;
   /**
-   * Additional model ids for transfer measurement. Requires the clip backend. A
-   * comparison model that fails to load fails the run - never silently skipped.
+   * Additional model ids for transfer measurement, loaded with the same backend
+   * family as `backend` (clip models for clip, VAE repos for vae). Requires a
+   * real backend. A comparison model that fails to load fails the run - never
+   * silently skipped.
    */
   compareModels?: string[];
   /** Optional prompt for image<->text drift. */
@@ -43,10 +44,10 @@ export async function aiAuditArtwork(
 ): Promise<EmbeddingAuditReport> {
   const backendId = options.backend ?? "mock";
   const compareModels = options.compareModels ?? [];
-  if (compareModels.length > 0 && backendId !== "clip" && backendId !== "transformers") {
+  if (compareModels.length > 0 && backendId === "mock") {
     throw new Error(
-      "compareModels requires the clip backend: transfer measurement compares real " +
-        "embedding models, and the mock backend has nothing to compare against.",
+      "compareModels requires a real backend (clip or vae): transfer measurement " +
+        "compares real embedding models, and the mock backend has nothing to compare against.",
     );
   }
 
@@ -65,7 +66,7 @@ export async function aiAuditArtwork(
   if (compareModels.length > 0) {
     const comparisons: TransferComparison[] = [];
     for (const model of compareModels) {
-      const compareBackend = createTransformersEmbeddingBackend({ model });
+      const compareBackend = resolveBackend(backendId, model);
       const originalEmbedding = await compareBackend.embedImage(original);
       const candidateEmbedding = await compareBackend.embedImage(candidate);
       comparisons.push(

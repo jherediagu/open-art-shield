@@ -424,7 +424,7 @@ oas ai-audit original.png candidate.png \
   --html ai-audit.html
 ```
 
-There are two backends:
+There are three backends:
 
 - **`mock`** (default) - a deterministic downsampled-luma feature, **not** a
   learned perceptual model. It exists so the pipeline can be built and tested
@@ -445,6 +445,28 @@ There are two backends:
   command fails with a clear message. CI and the test suite always use the `mock`
   backend; the `clip` backend was verified to run locally but is experimental.
 
+- **`vae`** (experimental) - the **Stable Diffusion VAE encoder** via ONNX
+  (`onnxruntime-node`, also an optional dependency). Instead of a CLIP proxy,
+  the image is encoded to the latent tensor diffusion models actually train and
+  denoise on - the surface Glaze, PhotoGuard, and StyleGuard attack (see
+  [`docs/RESEARCH.md`](docs/RESEARCH.md)):
+
+  ```bash
+  pnpm add onnxruntime-node
+  oas cloak artwork.png --backend vae --optimizer greedy \
+    --steps 40 --out artwork.cloaked.png
+  ```
+
+  The default model is `onnx-community/stable-diffusion-v1-5-ONNX` (the first
+  run downloads its ~130 MB `vae_encoder` and caches it under
+  `~/.cache/openartshield/`); `--model` accepts another Hugging Face repo with a
+  `vae_encoder/model.onnx`, or a local path to an encoder `.onnx` file. Honest
+  caveats: the standard ONNX exports sample the VAE's latent distribution inside
+  the graph, so encoding is not bit-deterministic - measured on SD 1.5 that puts
+  a noise floor of ~7e-6 on cosine drift, versus ~3e-1 for a cloak-strength
+  perturbation, so it is negligible for scoring; and drift on the latent is
+  still a measurement, not proven protection.
+
 #### Transfer measurement
 
 `oas ai-audit` can compare drift across a primary model and one or more comparison
@@ -461,7 +483,9 @@ oas ai-audit original.png cloaked.png \
   --html ai-audit-transfer.html
 ```
 
-`--compare-model` is repeatable and requires `--backend clip`. The report gains a
+`--compare-model` is repeatable and requires a real backend (`clip` or `vae`;
+comparison models load with the same backend family, so with `--backend vae` each
+id is another VAE-encoder repo). The report gains a
 `transfer` block with per-model drift and a transfer ratio
 (`comparison drift / primary drift`; null when the primary drift is zero). A
 comparison model that fails to load fails the run - nothing is silently skipped.

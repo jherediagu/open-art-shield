@@ -95,6 +95,18 @@ oas ai-audit original.png candidate.png \
 If `@huggingface/transformers` is not installed, `--backend clip` fails with a
 clear message; nothing else in the pipeline requires it.
 
+There is also an experimental `--backend vae` that encodes images with the
+**Stable Diffusion VAE encoder** (the latent surface diffusion models actually
+use) instead of a CLIP proxy. It needs the optional `onnxruntime-node`
+dependency and downloads the ~130 MB encoder on first use:
+
+```bash
+pnpm add onnxruntime-node
+
+oas cloak artwork.png --backend vae --optimizer greedy --steps 40 \
+  --out artwork.cloaked.png
+```
+
 To check whether drift transfers beyond the primary model, add one or more
 repeatable `--compare-model` flags (see the transfer measurement section of the
 [root README](../README.md)):

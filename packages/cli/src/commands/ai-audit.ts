@@ -11,8 +11,9 @@ export type AiAuditOptions = {
   model?: string;
   /**
    * Additional model ids to measure the same image pair on (transfer
-   * measurement). Requires the clip backend. A comparison model that fails to
-   * load fails the whole run - failed comparisons are never silently skipped.
+   * measurement), loaded with the same backend family (clip or vae). A
+   * comparison model that fails to load fails the whole run - failed
+   * comparisons are never silently skipped.
    */
   compareModels?: string[];
   prompt?: string;
@@ -25,10 +26,11 @@ export type AiAuditOptions = {
 export async function runAiAudit(options: AiAuditOptions): Promise<EmbeddingAuditReport> {
   const backendId = options.backend ?? "mock";
   const compareModels = options.compareModels ?? [];
-  if (compareModels.length > 0 && backendId !== "clip" && backendId !== "transformers") {
+  if (compareModels.length > 0 && backendId === "mock") {
     throw new CliError(
-      "--compare-model requires --backend clip: transfer measurement compares real " +
-        "embedding models, and the mock backend has nothing to compare against.",
+      "--compare-model requires a real backend (--backend clip or vae): transfer " +
+        "measurement compares real embedding models, and the mock backend has nothing " +
+        "to compare against.",
     );
   }
 

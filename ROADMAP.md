@@ -32,9 +32,11 @@ current status: OpenArtShield does not yet protect artworks from AI training or
 style mimicry. It embeds/audits watermarks, measures embedding drift, and can
 generate a measurable (but unproven) embedding perturbation scored through
 transforms, measure whether that drift transfers to other embedding models
-(`oas ai-audit --compare-model`), and search for it with either random sampling
-or a greedy hill-climber (`oas cloak --optimizer greedy`). The next steps are
-stronger optimizers and testing transfer beyond the CLIP family.
+(`oas ai-audit --compare-model`), search for it with either random sampling
+or a greedy hill-climber (`oas cloak --optimizer greedy`), and target either a
+CLIP proxy or the Stable Diffusion VAE latent itself (`--backend vae`). The next
+steps are stronger optimizers, style-statistics scoring, and an output-level
+protection-success metric.
 
 ## v0.1 - Current foundation
 
@@ -122,7 +124,7 @@ Planned improvements:
 - Replace random search with a smarter optimizer. _(started - `oas cloak --optimizer greedy`)_
 - Measure how much of a cloak survives published removal attacks (noisy upscaling, JPEG, purification). _(done - `oas attack`, see [`docs/RESEARCH.md`](docs/RESEARCH.md))_
 - Study Glaze/Mist-style research directions. _(surveyed - see [`docs/RESEARCH.md`](docs/RESEARCH.md))_
-- Move the cloak from the CLIP proxy toward the diffusion VAE latent surface.
+- Move the cloak from the CLIP proxy toward the diffusion VAE latent surface. _(done, experimental - `--backend vae`, SD VAE encoder via ONNX)_
 - Add benchmark datasets where licensing allows.
 - Clearly document known limitations and failure modes. _(done)_
 

@@ -203,7 +203,7 @@ describe("oas ai-audit", () => {
     expect(cli.options.compareModel).toEqual(["model-a", "model-b"]);
   });
 
-  it("rejects --compare-model when the backend is not clip", async () => {
+  it("rejects --compare-model on the mock backend", async () => {
     await expect(
       runAiAudit({
         original: inputPath,
@@ -211,7 +211,7 @@ describe("oas ai-audit", () => {
         backend: "mock",
         compareModels: ["Xenova/clip-vit-base-patch16"],
       }),
-    ).rejects.toThrow(/--compare-model requires --backend clip/);
+    ).rejects.toThrow(/--compare-model requires a real backend/);
   });
 
   it("fails clearly when --compare-model needs the missing optional dependency", async () => {
