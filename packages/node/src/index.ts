@@ -65,6 +65,13 @@ export {
   type TransformersBackendOptions,
 } from "./ai/transformers-backend.js";
 
+// Experimental Stable Diffusion VAE-encoder backend (ONNX, optional dep).
+export {
+  createVaeEmbeddingBackend,
+  vaeInputFromImage,
+  type VaeBackendOptions,
+} from "./ai/vae-backend.js";
+
 // High-level SDK API: profile-driven protection bundle + companions.
 export { protectArtwork } from "./protect/protect-artwork.js";
 export type {

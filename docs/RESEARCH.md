@@ -111,7 +111,12 @@ Scored by (scientific value x CPU/TypeScript feasibility):
    the EOT suite.)_
 2. **VAE-latent cloak.** Attack a Stable Diffusion VAE encoder's latent (via ONNX)
    instead of CLIP, with the greedy black-box search. High value (real surface),
-   medium feasibility (VAE is slower on CPU).
+   medium feasibility (VAE is slower on CPU). _(done, experimental - the `vae`
+   embedding backend encodes to the SD 1.5 latent through `onnxruntime-node`, and
+   plugs into `oas cloak`, `oas ai-audit --compare-model`, and `oas attack`
+   unchanged. One measured caveat: standard ONNX exports sample the latent
+   distribution in-graph, putting a ~7e-6 noise floor on cosine drift - five
+   orders of magnitude below cloak-level drift, so scoring is unaffected.)_
 3. **Style-statistics scoring.** Score candidates on Gram / mean-variance feature
    statistics (StyleGuard-style) rather than raw cosine. Reuses existing feature
    extraction.

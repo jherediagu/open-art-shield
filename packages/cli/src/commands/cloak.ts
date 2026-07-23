@@ -19,9 +19,10 @@ export type CloakOptions = {
   model?: string;
   /**
    * Additional models used to score candidates (multi-model scoring). With the
-   * clip backend each id loads another CLIP model (lazy, optional dependency);
-   * with the mock backend each id creates a deterministic mock variant so the
-   * flow can run in CI without model weights.
+   * clip backend each id loads another CLIP model, with the vae backend another
+   * VAE encoder (both lazy, optional dependencies); with the mock backend each
+   * id creates a deterministic mock variant so the flow can run in CI without
+   * model weights.
    */
   scoreModels?: string[];
   strength?: number;
@@ -95,7 +96,7 @@ export async function cloakCommand(options: CloakOptions): Promise<void> {
   if ((options.backend ?? "mock") === "mock") {
     failure(
       "Using the 'mock' backend: it is a deterministic placeholder, not a perceptual " +
-        "model, so cloaking against it is not meaningful. Use --backend clip for real runs.",
+        "model, so cloaking against it is not meaningful. Use --backend clip or vae for real runs.",
     );
   }
 

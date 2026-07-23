@@ -59,7 +59,7 @@ export type ProtectResult = {
 export type ProtectWorkflowOptions = ProtectOptions & {
   /** Protection profile (default "creator-balanced" = classic protect behavior). */
   profile?: string;
-  /** Embedding backend for the cloak/measure layers: "mock" (default) or "clip". */
+  /** Embedding backend for the cloak/measure layers: "mock" (default), "clip", or "vae". */
   backend?: string;
   /** Primary model id for the clip backend. */
   model?: string;
@@ -187,7 +187,7 @@ export async function protectCommand(options: ProtectWorkflowOptions): Promise<v
   ) {
     failure(
       "Using the 'mock' backend for the cloak/measure layers: it is a deterministic " +
-        "placeholder, not a perceptual model. Use --backend clip for real runs.",
+        "placeholder, not a perceptual model. Use --backend clip or vae for real runs.",
     );
   }
 

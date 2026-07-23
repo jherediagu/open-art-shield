@@ -130,11 +130,14 @@ export function buildCli() {
 
   cli
     .command("ai-audit <original> <candidate>", "Measure embedding drift between two images")
-    .option("--backend <id>", 'Embedding backend: "mock" (default) or "clip"')
-    .option("--model <id>", "Model id for the clip backend (default Xenova/clip-vit-base-patch32)")
+    .option("--backend <id>", 'Embedding backend: "mock" (default), "clip", or "vae"')
+    .option(
+      "--model <id>",
+      "Model id for the clip/vae backend (clip default Xenova/clip-vit-base-patch32)",
+    )
     .option(
       "--compare-model <id>",
-      "Also measure drift on this model (repeatable; requires --backend clip)",
+      "Also measure drift on this model (repeatable; requires --backend clip or vae)",
     )
     .option("--prompt <text>", "Optional prompt for image<->text drift")
     .option("--out <path>", "Path to write the JSON report")
@@ -161,8 +164,8 @@ export function buildCli() {
       "attack <original> <candidate>",
       "Measure how much cloak drift survives removal attacks",
     )
-    .option("--backend <id>", 'Embedding backend: "mock" (default) or "clip"')
-    .option("--model <id>", "Model id for the clip backend")
+    .option("--backend <id>", 'Embedding backend: "mock" (default), "clip", or "vae"')
+    .option("--model <id>", "Model id for the clip/vae backend")
     .option("--attacks <set>", 'Attack set: "standard" (default) or "none"')
     .option("--out <path>", "Path to write the JSON report")
     .option("--html <path>", "Also write a standalone HTML report")
@@ -197,10 +200,16 @@ export function buildCli() {
     .option("--sidecar <path>", "Sidecar path (default <out-basename>.openartshield.json)")
     .option("--skip-sidecar", "Do not write a sidecar file")
     .option("--store-message", "Store the message inside the sidecar (off by default)")
-    .option("--backend <id>", 'Embedding backend for cloak/measure layers: "mock" or "clip"')
-    .option("--model <id>", "Primary model id for the clip backend")
+    .option(
+      "--backend <id>",
+      'Embedding backend for cloak/measure layers: "mock", "clip", or "vae"',
+    )
+    .option("--model <id>", "Primary model id for the clip/vae backend")
     .option("--score-model <id>", "Extra cloak scoring model (repeatable)")
-    .option("--compare-model <id>", "Extra ai-audit transfer model (repeatable; requires clip)")
+    .option(
+      "--compare-model <id>",
+      "Extra ai-audit transfer model (repeatable; requires clip or vae)",
+    )
     .option("--eot <mode>", 'Cloak EOT mode: "none" (default), "mild", or "standard"')
     .option("--cloak-strength <number>", "Max per-channel pixel change for the cloak (default 4)")
     .option("--steps <number>", "Number of cloak candidate perturbations (default 8)")
@@ -254,8 +263,8 @@ export function buildCli() {
 
   cli
     .command("cloak <input>", "Experimental: perturb an image to increase embedding drift")
-    .option("--backend <id>", 'Embedding backend: "mock" (default) or "clip"')
-    .option("--model <id>", "Model id for the clip backend")
+    .option("--backend <id>", 'Embedding backend: "mock" (default), "clip", or "vae"')
+    .option("--model <id>", "Model id for the clip/vae backend")
     .option("--strength <number>", "Max per-channel pixel change (default 4)")
     .option("--steps <number>", "Number of candidate perturbations (default 8)")
     .option("--seed <number>", "Seed for the candidate generator (default 123)")

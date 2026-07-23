@@ -148,6 +148,6 @@ describe("verifyArtwork / aiAuditArtwork (SDK)", () => {
         backend: "mock",
         compareModels: ["Xenova/clip-vit-base-patch16"],
       }),
-    ).rejects.toThrow(/compareModels requires the clip backend/);
+    ).rejects.toThrow(/compareModels requires a real backend/);
   });
 });
