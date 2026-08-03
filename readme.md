@@ -754,8 +754,10 @@ oas trustmark-decode artwork.tm.png
 Measured on a natural-like test image, the TrustMark payload survived **all
 17** transforms/attacks in our suites (JPEG down to q30, resize, crop, blur,
 screenshot simulation, noisy upscaling, purification proxy), mostly with zero
-corrected bit flips, at ~42-50 dB PSNR - while our classical DCT baseline is
-strongly content-dependent. Embedding takes ~100 ms on CPU. Honest limits: a
+corrected bit flips, at ~42-50 dB PSNR - while our classical DCT baseline
+survived 8/17 (mild JPEG, light blur, brightness/contrast; it failed resize,
+crop, screenshot, aggressive JPEG and the removal attacks). Embedding takes
+~100 ms on CPU. Honest limits: a
 single test image is not a benchmark (reproduce before citing), only the Q
 variant is wired up, aspect ratios beyond 1:2 are rejected, and WAVES-class
 adversarial attacks can still remove any watermark - durable credentials
@@ -1053,11 +1055,13 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 
 ## Package overview
 
-| Package                                | Description                                                                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [`@openartshield/core`](packages/core) | Pure SDK: `PixelImage`, DCT, payload encoding, watermark embed/extract, PSNR/SSIM, audit primitives. No IO.  |
-| [`@openartshield/node`](packages/node) | Node image IO (PNG/JPEG/WebP via `sharp`) and deterministic transform simulations.                           |
-| [`@openartshield/cli`](packages/cli)   | The `oas` CLI: `protect`, `verify`, `embed`, `extract`, `audit`, `capacity`, `ai-audit`, `cloak`, `version`. |
+| Package                                    | Description                                                                                                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@openartshield/core`](packages/core)     | Pure SDK: `PixelImage`, DCT, payload encoding, watermark embed/extract, PSNR/SSIM, audit primitives. No IO.                                               |
+| [`@openartshield/node`](packages/node)     | Node image IO (PNG/JPEG/WebP via `sharp`) and deterministic transform simulations.                                                                        |
+| [`@openartshield/cli`](packages/cli)       | The `oas` CLI: `protect`, `verify`, `embed`, `extract`, `audit`, `capacity`, `ai-audit`, `cloak`, `declare`, `optout`, `trustmark`, `recover`, `version`. |
+| [`@openartshield/web`](packages/web)       | Browser bindings: canvas/ImageData IO over the pure core SDK + in-browser TrustMark verification. Client-side only - the image never leaves the page.     |
+| [`@openartshield/server`](packages/server) | Self-hosted REST server (JSON API) + Dockerfile: embed/extract/verify/audit/optout behind a port.                                                         |
 
 ### Built-in transforms
 
@@ -1082,7 +1086,9 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 - TrustMark learned watermarking (`oas trustmark`, optional
   `onnxruntime-node` dependency);
 - durable declarations that survive metadata stripping
-  (`oas declare-durable` / `oas recover`).
+  (`oas declare-durable` / `oas recover`);
+- browser bindings for fully client-side protection (`@openartshield/web`);
+- a self-hosted REST server + Docker image (`@openartshield/server`).
 
 **Not solved (and not claimed):**
 
@@ -1111,7 +1117,7 @@ The full, versioned plan lives in [`roadmap.md`](roadmap.md). In short:
 - **v0.6** - adversarial perturbation baselines (Glaze/Mist-style), honestly measured.
 - **v0.7** - Declare layer: C2PA + CAWG opt-out assertion, IPTC/TDMRep/ai.txt (landed - `oas declare`, `oas optout`).
 - **v0.8** - durable credentials: TrustMark watermark backend, manifest recovery via watermark pointer (landed - `oas declare-durable`, `oas recover`, `oas trustmark`).
-- **v0.9** - integration surface: browser/WASM package, Docker REST server.
+- **v0.9** - integration surface: browser package, Docker REST server (landed - `@openartshield/web`, `@openartshield/server`).
 - **v1.0** - continuous public benchmark, threat model, OpenSSF posture.
 
 See [`roadmap.md`](roadmap.md) for principles, non-goals, and research directions.

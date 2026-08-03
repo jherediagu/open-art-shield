@@ -92,7 +92,12 @@ export {
   DECLARE_KEY_FILENAME,
 } from "./declare/keys.js";
 export type { GenerateDeclareKeysOptions, GenerateDeclareKeysResult } from "./declare/keys.js";
-export { writeImageWithXmp, readImageXmp, type WriteXmpOptions } from "./declare/xmp.js";
+export {
+  writeImageWithXmp,
+  encodeImageWithXmp,
+  readImageXmp,
+  type WriteXmpOptions,
+} from "./declare/xmp.js";
 export { writeSiteOptOut } from "./declare/optout-site.js";
 export type { WriteSiteOptOutOptions, WriteSiteOptOutResult } from "./declare/optout-site.js";
 

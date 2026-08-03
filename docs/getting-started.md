@@ -175,6 +175,25 @@ import { readImage, writeImage } from "@openartshield/node";
 See the [root README](../readme.md) for SDK examples and the
 [`@openartshield/core`](../packages/core/readme.md) API surface.
 
+## Integrating (browser and server)
+
+For platforms and tools, two packages wrap the same SDK:
+
+```ts
+// Browser - fully client-side, the image never leaves the page:
+import { loadPixelImage, embedWatermark, createTrustmarkWebDecoder } from "@openartshield/web";
+```
+
+```bash
+# Self-hosted REST server (JSON API over a port):
+docker build -f packages/server/Dockerfile -t openartshield-server .
+docker run --rm -p 8787:8787 openartshield-server
+curl -s localhost:8787/healthz
+```
+
+See [`packages/web`](../packages/web/readme.md) and
+[`packages/server`](../packages/server/readme.md) for the API surface.
+
 ## Where to go next
 
 - [Demo guide](./demo.md) - a short tour of every layer and its command.
