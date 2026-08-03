@@ -50,6 +50,7 @@ listed below.
 - [Demo guide](./docs/DEMO.md)
 - [Architecture overview](./docs/ARCHITECTURE.md)
 - [Research landscape](./docs/RESEARCH.md)
+- [Product research: SDK, users, and B2B](./docs/PRODUCT_RESEARCH.md)
 - [Roadmap](./ROADMAP.md)
 
 ---
@@ -66,7 +67,7 @@ all of them. None is a guarantee - the value is in being able to measure each on
 | **Measure** | Quantify how a model "sees" an image via CLIP embedding drift                              | `oas ai-audit`                             | implemented           |
 | **Cloak**   | Experimental perturbation that shifts model-facing embeddings while staying visually close | `oas cloak` (with EOT scoring)             | experimental          |
 | **Audit**   | Run real-world transforms (JPEG, resize, crop, blur, screenshot) and report what survives  | `oas audit`                                | implemented           |
-| **Declare** | Attach provenance / licensing intent (e.g. "no AI training")                               | -                                          | future                |
+| **Declare** | Attach provenance / licensing intent (e.g. "no AI training")                               | `oas declare` / `oas optout`               | implemented           |
 | **Poison**  | Data-poisoning techniques against training pipelines                                       | -                                          | research-only, future |
 
 **Trace** and **Declare** make ownership and intent legible. **Cloak** and
@@ -659,6 +660,63 @@ and `--attacks none` runs the audit with no attacks. This is a measurement layer
 not a defense: a low survival ratio is evidence the protection was removed. See
 [`docs/RESEARCH.md`](docs/RESEARCH.md) for the sources and where this fits.
 
+### Declare: C2PA Content Credentials with an AI-training opt-out
+
+The **Declare** layer signs a [C2PA](https://c2pa.org/) manifest into a copy of
+the image, carrying the [CAWG Training and Data Mining
+assertion](https://cawg.io/training-and-data-mining/1.1/) - the standards-based,
+in-file way to say "no AI training" - plus an optional creator attribution. All
+four use categories (data mining, AI training, generative training, inference)
+default to **notAllowed**; opening one up is an explicit choice.
+
+C2PA signing needs the optional native dependency
+[`c2pa-node`](https://github.com/contentauth/c2pa-node)
+(`pnpm add c2pa-node`) and a signing certificate:
+
+```bash
+# 1. One-time: generate a local ES256 key + self-signed certificate (needs openssl)
+oas declare-keys --name "Jane Artist" --out-dir ~/.openartshield
+
+# 2. Sign the declaration into a copy of the artwork
+oas declare artwork.png --out artwork.declared.png \
+  --creator "Jane Artist" \
+  --cert ~/.openartshield/openartshield-cert.pem \
+  --key ~/.openartshield/openartshield-key.pem
+
+# 3. Anyone can read it back
+oas declare-read artwork.declared.png
+```
+
+`--test-signer` signs with the c2pa test certificate for a quick try-out.
+Honest framing: a self-signed certificate verifies cryptographically and names
+you, but is not on the C2PA trust list, so validators mark it as unknown - and
+a declaration is a **voluntary-compliance signal** (with legal weight under the
+EU AI Act's TDM-reservation rules), not technical protection. Metadata is also
+stripped by many platforms; the durable-credentials work in
+[`ROADMAP.md`](ROADMAP.md) (v0.8) is about surviving that.
+
+### Opt-out metadata and site files
+
+`oas optout` writes the [IPTC data-mining opt-out](https://iptc.org/std/guidelines/data-mining-opt-out/IPTC-Generative-AI-Opt-Out-Best-Practices.pdf)
+(`plus:DataMining`) into a copy of the image as XMP - the signal compliant
+crawlers check file-by-file:
+
+```bash
+oas optout artwork.jpg --out artwork.optout.jpg --creator "Jane Artist"
+# policies: allowed | prohibited | prohibited-ai-training (default)
+#           | prohibited-genai-training | prohibited-except-search
+```
+
+`oas optout-site` writes the site-level equivalents - a
+[TDMRep](https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/)
+reservation (`/.well-known/tdmrep.json`) and a
+[Spawning ai.txt](https://spawning.ai/ai-txt) - and prints the robots.txt and
+HTTP-header snippets to complete the setup:
+
+```bash
+oas optout-site --dir public --policy-url https://example.com/tdm-policy
+```
+
 ### Print the version
 
 ```bash
@@ -972,7 +1030,11 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 - robustness audits across real-world transforms;
 - CLIP-based `ai-audit` (embedding drift between two images);
 - experimental embedding cloak;
-- EOT scoring (cloak robustness across transformations).
+- EOT scoring (cloak robustness across transformations);
+- C2PA Content Credentials with the CAWG training/data-mining opt-out
+  (`oas declare`, optional `c2pa-node` dependency);
+- machine-readable opt-outs: IPTC XMP, TDMRep, ai.txt (`oas optout`,
+  `oas optout-site`).
 
 **Not solved (and not claimed):**
 
@@ -980,7 +1042,7 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 - guaranteed protection from style mimicry;
 - universal robustness across arbitrary pipelines and motivated adversaries;
 - legal enforcement or proof of ownership on its own;
-- provenance / C2PA;
+- declarations that survive metadata stripping (durable credentials are v0.8);
 - poisoning.
 
 It is not yet a consumer-grade protection app for artists - the current focus is
@@ -999,6 +1061,10 @@ The full, versioned plan lives in [`ROADMAP.md`](ROADMAP.md). In short:
 - **v0.4** - provenance / C2PA experiments.
 - **v0.5** - CLIP/OpenCLIP embedding-drift and semantic-robustness metrics.
 - **v0.6** - adversarial perturbation baselines (Glaze/Mist-style), honestly measured.
+- **v0.7** - Declare layer: C2PA + CAWG opt-out assertion, IPTC/TDMRep/ai.txt (landed - `oas declare`, `oas optout`).
+- **v0.8** - durable credentials: TrustMark watermark backend, manifest recovery via watermark pointer.
+- **v0.9** - integration surface: browser/WASM package, Docker REST server.
+- **v1.0** - continuous public benchmark, threat model, OpenSSF posture.
 
 See [`ROADMAP.md`](ROADMAP.md) for principles, non-goals, and research directions.
 

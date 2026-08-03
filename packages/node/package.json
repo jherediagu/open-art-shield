@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@openartshield/core": "workspace:*",
-    "sharp": "^0.33.4"
+    "sharp": "^0.34.0"
   },
   "devDependencies": {
     "tsup": "^8.1.0",

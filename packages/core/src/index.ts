@@ -116,6 +116,51 @@ export type { EotMode } from "./cloak/eot.js";
 export { aggregateAverageDrift, aggregateMinModelDrift } from "./cloak/scoring.js";
 export type { CloakModelScore } from "./cloak/scoring.js";
 
+// Declare layer (pure C2PA manifest / CAWG assertion builders; signing lives
+// in @openartshield/node behind the optional 'c2pa-node' dependency).
+export {
+  TRAINING_MINING_ASSERTION_LABEL,
+  TRAINING_MINING_ENTRY_KEYS,
+  TRAINING_USES,
+  isTrainingUse,
+  buildTrainingMiningAssertion,
+  DECLARE_FORMATS,
+  isDeclareFormat,
+  buildDeclareManifest,
+} from "./declare.js";
+export type {
+  TrainingUse,
+  TrainingPreference,
+  TrainingMiningPreferences,
+  TrainingMiningEntry,
+  TrainingMiningEntryKey,
+  TrainingMiningAssertion,
+  DeclareAssertion,
+  DeclareManifestDefinition,
+  DeclareFormat,
+  BuildDeclareManifestParams,
+} from "./declare.js";
+
+// Machine-readable opt-out builders (TDMRep, ai.txt, IPTC XMP).
+export {
+  PLUS_DATA_MINING_VALUES,
+  DATA_MINING_POLICIES,
+  isDataMiningPolicy,
+  buildXmpDataMiningPacket,
+  buildTdmRepJson,
+  TDM_RESERVATION_HEADER,
+  AI_TXT_MEDIA_EXTENSIONS,
+  buildAiTxt,
+  AI_CRAWLER_ROBOTS_SNIPPET,
+} from "./optout.js";
+export type {
+  DataMiningPolicy,
+  BuildXmpParams,
+  BuildTdmRepParams,
+  AiTxtMediaCategory,
+  BuildAiTxtParams,
+} from "./optout.js";
+
 // Protection profiles (pure layer combinations; orchestration lives in the CLI).
 export {
   PROTECTION_PROFILE_NAMES,

@@ -20,7 +20,7 @@ OpenArtShield is best understood as five layers, not one watermarking tool. Each
 is an experimental signal, not a guarantee:
 
 - **Trace** - invisible watermarking, sidecar, verification. _"Can I detect or prove a signal later?"_ (started)
-- **Declare** - metadata, license assertions, C2PA/provenance. _"Can I declare ownership and usage terms?"_ (planned)
+- **Declare** - metadata, license assertions, C2PA/provenance. _"Can I declare ownership and usage terms?"_ (started - `oas declare`, `oas optout`)
 - **Cloak** - adversarial/style perturbations aimed at model embeddings. _"Can I make style mimicry harder?"_ (started - experimental `oas cloak`)
 - **Poison** - dataset-poisoning experiments. _"Can I make unauthorized training less useful?"_ (research only)
 - **Measure** - robustness, visual quality, and AI-perception (embedding) drift. _"Did any of it actually work?"_ (started)
@@ -129,6 +129,69 @@ Planned improvements:
 - Clearly document known limitations and failure modes. _(done)_
 
 Goal: evaluate perturbation-based techniques without overclaiming their effectiveness.
+
+## v0.7 - Declare layer: provenance and machine-readable opt-out
+
+Grounded in [`docs/PRODUCT_RESEARCH.md`](docs/PRODUCT_RESEARCH.md): no open
+source SDK combines watermarking, provenance, and robustness auditing in one
+flow, and the EU AI Act makes machine-readable opt-outs legally meaningful
+(Art. 4(3) DSM reservation, Art. 53/50). Declarations are voluntary-compliance
+signals, not enforcement - but they are the only layer with regulatory teeth.
+
+Planned improvements:
+
+- Sign C2PA manifests carrying the CAWG training-and-data-mining assertion
+  (`oas declare`, optional `c2pa-node` dependency). _(done)_
+- Inspect Content Credentials on any image (`oas declare-read`). _(done)_
+- Local keypair + self-signed certificate generation for instant DX
+  (`oas declare-keys`); bring-your-own-cert for trust-list interop. _(done)_
+- Embed the IPTC `plus:DataMining` opt-out as XMP metadata (`oas optout`). _(done)_
+- Emit site-level opt-out artifacts: TDMRep (`/.well-known/tdmrep.json`),
+  `ai.txt`, and robots/header snippets (`oas optout-site`). _(done)_
+- Map the opt-out data model onto the IETF AIPREF vocabulary once the RFC
+  lands (~2026).
+
+Goal: fill the empty **Declare** layer with standards-based, verifiable
+signals instead of inventing our own.
+
+## v0.8 - Durable credentials
+
+Planned improvements:
+
+- Add TrustMark (MIT, Adobe) as an alternative watermark backend behind the
+  same `WatermarkAlgorithm`-style interface.
+- Implement the durable-credentials pattern: watermark payload as a recovery
+  pointer to the sidecar/remote manifest, so provenance survives platform
+  re-encoding and metadata stripping.
+- Benchmark TrustMark vs the DCT baseline under `oas attack` and `oas audit`.
+
+Goal: provenance that survives the places where metadata dies.
+
+## v0.9 - Integration surface
+
+Planned improvements:
+
+- `@openartshield/web`: browser package (WASM, optional WebGPU) for
+  watermark/verify, enabling fully client-side protection ("your image never
+  leaves your browser").
+- Docker self-hosted REST server: `protect/verify/audit` plus async jobs and
+  webhooks - the artifact a platform team actually evaluates.
+- Static client-side web app + public verifier as demo.
+
+Goal: meet integrators (B2B) and artists where they are.
+
+## v1.0 - Benchmark posture
+
+Planned improvements:
+
+- Continuous, reproducible public benchmark (protections x attacks x
+  metrics, CopyrightMeter-style) published from CI.
+- Documented threat model; OpenSSF Best Practices badge and Scorecard.
+- Position OpenArtShield as the reproducible harness that measures what
+  actually holds up.
+
+Goal: make honesty the differentiator - "know exactly how much your
+protection survives."
 
 ## Non-goals
 

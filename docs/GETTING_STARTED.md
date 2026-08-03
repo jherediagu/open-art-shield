@@ -116,6 +116,38 @@ oas ai-audit original.png cloaked.png \
   --backend clip --compare-model Xenova/clip-vit-base-patch16
 ```
 
+## Declaring "no AI training" (optional)
+
+The Declare layer signs C2PA Content Credentials with a standards-based
+AI-training opt-out, and writes machine-readable opt-out metadata and site
+files. C2PA signing needs the optional native `c2pa-node` dependency:
+
+```bash
+pnpm add c2pa-node
+
+# One-time: local key + self-signed certificate (requires openssl)
+oas declare-keys --name "Jane Artist" --out-dir ~/.openartshield
+
+# Sign the declaration into a copy of the artwork, then read it back
+oas declare artwork.png --out artwork.declared.png \
+  --creator "Jane Artist" \
+  --cert ~/.openartshield/openartshield-cert.pem \
+  --key ~/.openartshield/openartshield-key.pem
+oas declare-read artwork.declared.png
+```
+
+Without `c2pa-node` you can still write the XMP opt-out and site-level files -
+they only need sharp:
+
+```bash
+oas optout artwork.jpg --out artwork.optout.jpg --creator "Jane Artist"
+oas optout-site --dir public
+```
+
+These are voluntary-compliance signals (with legal weight under the EU AI
+Act), not technical protection - see the Declare section of the
+[root README](../README.md) for the honest framing.
+
 ## Using the SDK
 
 The packages are also consumable as libraries:
