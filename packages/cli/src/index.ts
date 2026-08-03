@@ -11,6 +11,11 @@ import { capacityCommand } from "./commands/capacity.js";
 import { protectCommand } from "./commands/protect.js";
 import { verifyCommand } from "./commands/verify.js";
 import { versionCommand } from "./commands/version.js";
+import { declareCommand } from "./commands/declare.js";
+import { declareReadCommand } from "./commands/declare-read.js";
+import { declareKeysCommand } from "./commands/declare-keys.js";
+import { optOutCommand } from "./commands/optout.js";
+import { optOutSiteCommand } from "./commands/optout-site.js";
 import { CLI_VERSION, failure } from "./utils/output.js";
 import { CliError, errorMessage } from "./utils/errors.js";
 
@@ -319,6 +324,109 @@ export function buildCli() {
         input,
         message: requiredString(options.message, "--message"),
         repetitions: optionalInt(options.repetitions, "--repetitions"),
+      });
+    });
+
+  cli
+    .command("declare <input>", "Sign C2PA Content Credentials with an AI-training opt-out")
+    .option("--out <out>", "Output path for the signed image (same format as the input)")
+    .option("--title <title>", "Manifest title (default: input file name)")
+    .option("--creator <name>", "Creator name, recorded as the CreativeWork author")
+    .option("--data-mining <policy>", 'Policy: "allowed", "not-allowed" (default), "constrained"')
+    .option("--ai-training <policy>", "Policy for AI/ML training (same values)")
+    .option("--generative-training <policy>", "Policy for generative AI training (same values)")
+    .option("--ai-inference <policy>", "Policy for AI inference (same values)")
+    .option("--constraint <text>", 'Constraint text for "constrained" categories')
+    .option("--cert <path>", "Signing certificate PEM (see `oas declare-keys`)")
+    .option("--key <path>", "Signing private key PEM")
+    .option("--tsa-url <url>", "RFC 3161 timestamp authority URL")
+    .option("--test-signer", "Sign with the c2pa test certificate (development only)")
+    .example(
+      '  oas declare artwork.png --out artwork.declared.png --creator "Demo Artist" --cert cert.pem --key key.pem',
+    )
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await declareCommand({
+        input,
+        out: requiredString(options.out, "--out"),
+        title: typeof options.title === "string" ? options.title : undefined,
+        creator: typeof options.creator === "string" ? options.creator : undefined,
+        dataMining: typeof options.dataMining === "string" ? options.dataMining : undefined,
+        aiTraining: typeof options.aiTraining === "string" ? options.aiTraining : undefined,
+        generativeTraining:
+          typeof options.generativeTraining === "string" ? options.generativeTraining : undefined,
+        aiInference: typeof options.aiInference === "string" ? options.aiInference : undefined,
+        constraint: typeof options.constraint === "string" ? options.constraint : undefined,
+        testSigner: options.testSigner === true,
+        cert: typeof options.cert === "string" ? options.cert : undefined,
+        key: typeof options.key === "string" ? options.key : undefined,
+        tsaUrl: typeof options.tsaUrl === "string" ? options.tsaUrl : undefined,
+      });
+    });
+
+  cli
+    .command("declare-read <input>", "Read the C2PA Content Credentials of an image")
+    .option("--json <path>", "Also write the parsed manifest as JSON")
+    .example("  oas declare-read artwork.declared.png")
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await declareReadCommand({
+        input,
+        json: typeof options.json === "string" ? options.json : undefined,
+      });
+    });
+
+  cli
+    .command("declare-keys", "Generate a self-signed certificate for `oas declare`")
+    .option("--name <name>", "Name recorded in the certificate")
+    .option("--out-dir <dir>", 'Output directory (default ".")')
+    .option("--days <days>", "Certificate validity in days (default 365)")
+    .example('  oas declare-keys --name "Demo Artist" --out-dir ~/.openartshield')
+    .action(async (options: Record<string, unknown>) => {
+      await declareKeysCommand({
+        name: requiredString(options.name, "--name"),
+        outDir: typeof options.outDir === "string" ? options.outDir : undefined,
+        days: optionalInt(options.days, "--days"),
+      });
+    });
+
+  cli
+    .command("optout <input>", "Embed an IPTC data-mining opt-out (XMP) into an image copy")
+    .option("--out <out>", "Output path for the image with opt-out metadata")
+    .option(
+      "--policy <policy>",
+      'One of "allowed", "prohibited", "prohibited-ai-training" (default), ' +
+        '"prohibited-genai-training", "prohibited-except-search"',
+    )
+    .option("--creator <name>", "Creator name (dc:creator)")
+    .option("--web-statement <url>", "URL of a rights statement (xmpRights:WebStatement)")
+    .option("--constraint <text>", "Free-text constraint (plus:OtherConstraints)")
+    .option("--quality <quality>", "Encoder quality for lossy output formats")
+    .example('  oas optout artwork.jpg --out artwork.optout.jpg --creator "Demo Artist"')
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await optOutCommand({
+        input,
+        out: requiredString(options.out, "--out"),
+        policy: typeof options.policy === "string" ? options.policy : undefined,
+        creator: typeof options.creator === "string" ? options.creator : undefined,
+        webStatement: typeof options.webStatement === "string" ? options.webStatement : undefined,
+        constraint: typeof options.constraint === "string" ? options.constraint : undefined,
+        quality: optionalInt(options.quality, "--quality"),
+      });
+    });
+
+  cli
+    .command("optout-site", "Write site-level opt-out files (TDMRep + ai.txt)")
+    .option("--dir <dir>", 'Site root directory to write into (e.g. "public")')
+    .option("--policy-url <url>", "TDM policy URL recorded in tdmrep.json")
+    .option(
+      "--disallow <category>",
+      "ai.txt category to disallow (repeatable; default all): images, text, audio, video, code",
+    )
+    .example("  oas optout-site --dir public --policy-url https://example.com/tdm-policy")
+    .action(async (options: Record<string, unknown>) => {
+      await optOutSiteCommand({
+        dir: requiredString(options.dir, "--dir"),
+        policyUrl: typeof options.policyUrl === "string" ? options.policyUrl : undefined,
+        disallow: optionalStringList(options.disallow, "--disallow"),
       });
     });
 

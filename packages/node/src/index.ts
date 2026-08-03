@@ -72,6 +72,30 @@ export {
   type VaeBackendOptions,
 } from "./ai/vae-backend.js";
 
+// Declare layer: C2PA signing/reading (optional 'c2pa-node' dep), XMP opt-out
+// embedding, self-signed key generation, and site-level opt-out files.
+export {
+  signDeclaration,
+  readDeclaration,
+  declareFormatFromPath,
+  DEFAULT_TSA_URL,
+} from "./declare/c2pa.js";
+export type {
+  DeclareSigner,
+  SignDeclarationOptions,
+  DeclarationAssertion,
+  DeclarationReadResult,
+} from "./declare/c2pa.js";
+export {
+  generateDeclareKeys,
+  DECLARE_CERT_FILENAME,
+  DECLARE_KEY_FILENAME,
+} from "./declare/keys.js";
+export type { GenerateDeclareKeysOptions, GenerateDeclareKeysResult } from "./declare/keys.js";
+export { writeImageWithXmp, readImageXmp, type WriteXmpOptions } from "./declare/xmp.js";
+export { writeSiteOptOut } from "./declare/optout-site.js";
+export type { WriteSiteOptOutOptions, WriteSiteOptOutResult } from "./declare/optout-site.js";
+
 // High-level SDK API: profile-driven protection bundle + companions.
 export { protectArtwork } from "./protect/protect-artwork.js";
 export type {
