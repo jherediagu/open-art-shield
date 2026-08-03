@@ -8,7 +8,7 @@ import type { EmbeddingBackend, PixelImage } from "@openartshield/core";
 
 // Experimental Stable Diffusion VAE-encoder backend (ONNX via onnxruntime-node).
 //
-// This is the "real surface" backend from docs/RESEARCH.md: Glaze, PhotoGuard
+// This is the "real surface" backend from docs/research.md: Glaze, PhotoGuard
 // and StyleGuard all attack the diffusion model's own VAE/latent encoder, not
 // CLIP's text-image cosine space. Embedding an image here means encoding it to
 // the latent tensor Stable Diffusion actually trains and denoises on, so cloak

@@ -87,8 +87,23 @@ export type DeclareResult = {
   signerKind: DeclareSigner["kind"];
 };
 
-export async function runDeclare(options: DeclareOptions): Promise<DeclareResult> {
-  const signer = resolveSigner(options);
+/**
+ * Build a declare manifest from the shared CLI policy flags. Also used by
+ * `oas declare-durable`, which binds the same manifest through the watermark.
+ */
+export function manifestFromDeclareFlags(
+  options: Pick<
+    DeclareOptions,
+    | "input"
+    | "title"
+    | "creator"
+    | "dataMining"
+    | "aiTraining"
+    | "generativeTraining"
+    | "aiInference"
+    | "constraint"
+  >,
+) {
   const training: TrainingMiningPreferences = {};
   const dataMining = parseUse(options.dataMining, "--data-mining", options.constraint);
   const aiTraining = parseUse(options.aiTraining, "--ai-training", options.constraint);
@@ -103,13 +118,18 @@ export async function runDeclare(options: DeclareOptions): Promise<DeclareResult
   if (generative !== undefined) training.aiGenerativeTraining = generative;
   if (inference !== undefined) training.aiInference = inference;
 
-  const manifest = buildDeclareManifest({
+  return buildDeclareManifest({
     title: options.title ?? basename(options.input),
     format: declareFormatFromPath(options.input),
     claimGenerator: `openartshield/${CLI_VERSION}`,
     ...(options.creator !== undefined ? { creatorName: options.creator } : {}),
     training,
   });
+}
+
+export async function runDeclare(options: DeclareOptions): Promise<DeclareResult> {
+  const signer = resolveSigner(options);
+  const manifest = manifestFromDeclareFlags(options);
 
   const { outputPath } = await signDeclaration({
     input: options.input,

@@ -27,7 +27,7 @@ is an experimental signal, not a guarantee:
 
 **Trace** and **Measure** are implemented; **Cloak** has an experimental
 prototype with EOT (Expectation Over Transformation) scoring, demonstrated with a
-real CLIP run in [`examples/cloak-eot/`](examples/cloak-eot/README.md). The honest
+real CLIP run in [`examples/cloak-eot/`](examples/cloak-eot/readme.md). The honest
 current status: OpenArtShield does not yet protect artworks from AI training or
 style mimicry. It embeds/audits watermarks, measures embedding drift, and can
 generate a measurable (but unproven) embedding perturbation scored through
@@ -61,9 +61,9 @@ This version is intentionally limited. It exists to establish the architecture, 
 
 Planned improvements:
 
-- Add real example audits to the repository. _(done - see [`examples/`](examples/README.md))_
+- Add real example audits to the repository. _(done - see [`examples/`](examples/readme.md))_
 - Include original image, protected image, and generated audit report. _(done)_
-- Add `examples/README.md` with reproduction steps. _(done)_
+- Add `examples/readme.md` with reproduction steps. _(done)_
 - Add a static HTML report generator. _(done - `oas audit --html`)_
 - Add a capacity estimation command such as `oas capacity`. _(done)_
 - Add a one-shot `oas protect` workflow with sidecar metadata and `oas verify`. _(done)_
@@ -118,12 +118,12 @@ Planned improvements:
 
 - Add a first experimental embedding cloak. _(done - `oas cloak`, seeded random search, mock + clip backends)_
 - Add perturbation quality guardrails (PSNR/SSIM). _(done)_
-- Add EOT-based robustness: score the cloak _through_ JPEG/resize/blur/screenshot transforms. _(done - `oas cloak --eot`, see [`examples/cloak-eot/`](examples/cloak-eot/README.md))_
+- Add EOT-based robustness: score the cloak _through_ JPEG/resize/blur/screenshot transforms. _(done - `oas cloak --eot`, see [`examples/cloak-eot/`](examples/cloak-eot/readme.md))_
 - Measure whether cloak drift transfers to other embedding models (avoid overfitting to one CLIP variant). _(done - `oas ai-audit --compare-model`)_
 - Score cloak candidates across multiple embedding models during the search. _(done - `oas cloak --score-model`)_
 - Replace random search with a smarter optimizer. _(started - `oas cloak --optimizer greedy`)_
-- Measure how much of a cloak survives published removal attacks (noisy upscaling, JPEG, purification). _(done - `oas attack`, see [`docs/RESEARCH.md`](docs/RESEARCH.md))_
-- Study Glaze/Mist-style research directions. _(surveyed - see [`docs/RESEARCH.md`](docs/RESEARCH.md))_
+- Measure how much of a cloak survives published removal attacks (noisy upscaling, JPEG, purification). _(done - `oas attack`, see [`docs/research.md`](docs/research.md))_
+- Study Glaze/Mist-style research directions. _(surveyed - see [`docs/research.md`](docs/research.md))_
 - Move the cloak from the CLIP proxy toward the diffusion VAE latent surface. _(done, experimental - `--backend vae`, SD VAE encoder via ONNX)_
 - Add benchmark datasets where licensing allows.
 - Clearly document known limitations and failure modes. _(done)_
@@ -132,7 +132,7 @@ Goal: evaluate perturbation-based techniques without overclaiming their effectiv
 
 ## v0.7 - Declare layer: provenance and machine-readable opt-out
 
-Grounded in [`docs/PRODUCT_RESEARCH.md`](docs/PRODUCT_RESEARCH.md): no open
+Grounded in [`docs/product-research.md`](docs/product-research.md): no open
 source SDK combines watermarking, provenance, and robustness auditing in one
 flow, and the EU AI Act makes machine-readable opt-outs legally meaningful
 (Art. 4(3) DSM reservation, Art. 53/50). Declarations are voluntary-compliance
@@ -158,14 +158,28 @@ signals instead of inventing our own.
 
 Planned improvements:
 
-- Add TrustMark (MIT, Adobe) as an alternative watermark backend behind the
-  same `WatermarkAlgorithm`-style interface.
+- Add TrustMark (MIT, Adobe) as an alternative, learned watermark backend.
+  _(done - `oas trustmark` / `oas trustmark-decode`; ONNX models via the
+  optional `onnxruntime-node` dependency, the 100-bit BCH data layer is a
+  pure-TS port cross-checked against the canonical Python implementation)_
 - Implement the durable-credentials pattern: watermark payload as a recovery
   pointer to the sidecar/remote manifest, so provenance survives platform
-  re-encoding and metadata stripping.
-- Benchmark TrustMark vs the DCT baseline under `oas attack` and `oas audit`.
+  re-encoding and metadata stripping. _(done - `oas declare-durable` embeds a
+  60-bit truncated-SHA-256 record ID in the pixels; `oas recover` finds and
+  integrity-checks the manifest from a fully stripped copy)_
+- Benchmark TrustMark vs the DCT baseline under the transform + attack
+  suites. _(done - on a natural-like test image TrustMark survived all 17
+  transforms/attacks including JPEG q30, screenshot simulation, noisy
+  upscaling and the purification proxy, mostly with 0 corrected bit flips;
+  the classical DCT baseline is strongly content-dependent and failed on
+  smooth imagery. One image, one run - reproduce before citing.)_
 
 Goal: provenance that survives the places where metadata dies.
+
+Known limits: only the TrustMark Q variant is wired up; extreme aspect
+ratios (beyond 1:2) are rejected at embed time; and published attacks
+(WAVES-class regeneration/adversarial) can still remove any watermark -
+durable credentials raise the cost of _casual_ stripping, nothing more.
 
 ## v0.9 - Integration surface
 

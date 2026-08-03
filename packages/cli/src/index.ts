@@ -16,6 +16,8 @@ import { declareReadCommand } from "./commands/declare-read.js";
 import { declareKeysCommand } from "./commands/declare-keys.js";
 import { optOutCommand } from "./commands/optout.js";
 import { optOutSiteCommand } from "./commands/optout-site.js";
+import { trustmarkDecodeCommand, trustmarkEmbedCommand } from "./commands/trustmark.js";
+import { declareDurableCommand, recoverCommand } from "./commands/declare-durable.js";
 import { CLI_VERSION, failure } from "./utils/output.js";
 import { CliError, errorMessage } from "./utils/errors.js";
 
@@ -428,6 +430,80 @@ export function buildCli() {
         policyUrl: typeof options.policyUrl === "string" ? options.policyUrl : undefined,
         disallow: optionalStringList(options.disallow, "--disallow"),
       });
+    });
+
+  cli
+    .command(
+      "declare-durable <input>",
+      "Declaration that survives metadata stripping (watermark-backed)",
+    )
+    .option("--out <out>", "Output path for the stamped image")
+    .option("--store <dir>", 'Manifest store directory (default "oas-manifests")')
+    .option("--title <title>", "Manifest title (default: input file name)")
+    .option("--creator <name>", "Creator name, recorded as the CreativeWork author")
+    .option("--data-mining <policy>", 'Policy: "allowed", "not-allowed" (default), "constrained"')
+    .option("--ai-training <policy>", "Policy for AI/ML training (same values)")
+    .option("--generative-training <policy>", "Policy for generative AI training (same values)")
+    .option("--ai-inference <policy>", "Policy for AI inference (same values)")
+    .option("--constraint <text>", 'Constraint text for "constrained" categories')
+    .option("--strength <number>", "Watermark strength in (0, 1] (default 0.95)")
+    .option("--quality <quality>", "Encoder quality for lossy output formats")
+    .example(
+      '  oas declare-durable artwork.png --out artwork.durable.png --creator "Demo Artist" --store oas-manifests',
+    )
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await declareDurableCommand({
+        input,
+        out: requiredString(options.out, "--out"),
+        store: typeof options.store === "string" ? options.store : undefined,
+        title: typeof options.title === "string" ? options.title : undefined,
+        creator: typeof options.creator === "string" ? options.creator : undefined,
+        dataMining: typeof options.dataMining === "string" ? options.dataMining : undefined,
+        aiTraining: typeof options.aiTraining === "string" ? options.aiTraining : undefined,
+        generativeTraining:
+          typeof options.generativeTraining === "string" ? options.generativeTraining : undefined,
+        aiInference: typeof options.aiInference === "string" ? options.aiInference : undefined,
+        constraint: typeof options.constraint === "string" ? options.constraint : undefined,
+        strength: optionalNumber(options.strength, "--strength"),
+        quality: optionalInt(options.quality, "--quality"),
+      });
+    });
+
+  cli
+    .command("recover <input>", "Recover a durable declaration from the pixels alone")
+    .option("--store <dir>", 'Manifest store directory (default "oas-manifests")')
+    .example("  oas recover downloaded-copy.jpg --store oas-manifests")
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await recoverCommand({
+        input,
+        store: typeof options.store === "string" ? options.store : undefined,
+      });
+    });
+
+  cli
+    .command("trustmark <input>", "Embed a TrustMark learned watermark (optional ONNX deps)")
+    .option("--message <message>", "7-bit ASCII payload (8 chars with the default BCH_5)")
+    .option("--out <out>", "Output path for the watermarked image")
+    .option("--ecc <schema>", 'Error correction: "BCH_SUPER", "BCH_5" (default), "BCH_4", "BCH_3"')
+    .option("--strength <number>", "Residual strength in (0, 1] (default 0.95)")
+    .option("--quality <quality>", "Encoder quality for lossy output formats")
+    .example('  oas trustmark artwork.png --message "oas:abc12" --out artwork.tm.png')
+    .action(async (input: string, options: Record<string, unknown>) => {
+      await trustmarkEmbedCommand({
+        input,
+        message: requiredString(options.message, "--message"),
+        out: requiredString(options.out, "--out"),
+        ecc: typeof options.ecc === "string" ? options.ecc : undefined,
+        strength: optionalNumber(options.strength, "--strength"),
+        quality: optionalInt(options.quality, "--quality"),
+      });
+    });
+
+  cli
+    .command("trustmark-decode <input>", "Decode a TrustMark watermark from an image")
+    .example("  oas trustmark-decode artwork.tm.png")
+    .action(async (input: string) => {
+      await trustmarkDecodeCommand({ input });
     });
 
   cli.command("version", "Print the OpenArtShield CLI version").action(() => {

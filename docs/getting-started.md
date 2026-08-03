@@ -109,7 +109,7 @@ oas cloak artwork.png --backend vae --optimizer greedy --steps 40 \
 
 To check whether drift transfers beyond the primary model, add one or more
 repeatable `--compare-model` flags (see the transfer measurement section of the
-[root README](../README.md)):
+[root README](../readme.md)):
 
 ```bash
 oas ai-audit original.png cloaked.png \
@@ -146,7 +146,19 @@ oas optout-site --dir public
 
 These are voluntary-compliance signals (with legal weight under the EU AI
 Act), not technical protection - see the Declare section of the
-[root README](../README.md) for the honest framing.
+[root README](../readme.md) for the honest framing.
+
+To make a declaration survive metadata stripping (re-encoding, screenshots),
+use the durable variant - it embeds a recovery ID in the pixels via a
+TrustMark watermark (optional `onnxruntime-node` dependency, ~64 MB of ONNX
+models cached on first use):
+
+```bash
+pnpm add onnxruntime-node
+
+oas declare-durable artwork.png --out artwork.durable.png --creator "Jane Artist"
+oas recover some-downloaded-copy.jpg --store oas-manifests
+```
 
 ## Using the SDK
 
@@ -160,13 +172,13 @@ import { embedWatermark, extractWatermark } from "@openartshield/core";
 import { readImage, writeImage } from "@openartshield/node";
 ```
 
-See the [root README](../README.md) for SDK examples and the
-[`@openartshield/core`](../packages/core/README.md) API surface.
+See the [root README](../readme.md) for SDK examples and the
+[`@openartshield/core`](../packages/core/readme.md) API surface.
 
 ## Where to go next
 
-- [Demo guide](./DEMO.md) - a short tour of every layer and its command.
-- [Architecture overview](./ARCHITECTURE.md) - packages, data flows, and design decisions.
-- [`examples/`](../examples/README.md) - a reproducible watermark audit.
-- [`examples/cloak-eot/`](../examples/cloak-eot/README.md) - a real CLIP + EOT cloak run.
-- [Roadmap](../ROADMAP.md) - versioned plan, principles, and non-goals.
+- [Demo guide](./demo.md) - a short tour of every layer and its command.
+- [Architecture overview](./architecture.md) - packages, data flows, and design decisions.
+- [`examples/`](../examples/readme.md) - a reproducible watermark audit.
+- [`examples/cloak-eot/`](../examples/cloak-eot/readme.md) - a real CLIP + EOT cloak run.
+- [Roadmap](../roadmap.md) - versioned plan, principles, and non-goals.

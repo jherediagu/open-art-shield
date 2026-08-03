@@ -144,7 +144,17 @@ describe("cli wiring", () => {
   it("registers the declare and optout commands", () => {
     const cli = buildCli();
     const names = cli.commands.map((c) => c.name);
-    for (const name of ["declare", "declare-read", "declare-keys", "optout", "optout-site"]) {
+    for (const name of [
+      "declare",
+      "declare-read",
+      "declare-keys",
+      "declare-durable",
+      "recover",
+      "trustmark",
+      "trustmark-decode",
+      "optout",
+      "optout-site",
+    ]) {
       expect(names).toContain(name);
     }
   });
