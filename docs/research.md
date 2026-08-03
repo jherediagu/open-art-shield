@@ -64,7 +64,7 @@ own latent/feature space or its training process.
 - Glaze **reports** within-family transfer (cloak with one extractor, mimic with
   another SD extractor: PSR >90%), but protection degrades most when architecture
   **and** training data both differ. This matches what OpenArtShield already
-  measured with CLIP variants in [`examples/cloak-transfer/`](../examples/cloak-transfer/README.md).
+  measured with CLIP variants in [`examples/cloak-transfer/`](../examples/cloak-transfer/readme.md).
 - There is dedicated work on **transfer-robust / black-box** perturbation that
   exploits diffusion models' generative and discriminative signals to cross
   models (arXiv:2305.08192).

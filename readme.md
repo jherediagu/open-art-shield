@@ -46,12 +46,12 @@ listed below.
 
 ## Documentation
 
-- [Getting started](./docs/GETTING_STARTED.md)
-- [Demo guide](./docs/DEMO.md)
-- [Architecture overview](./docs/ARCHITECTURE.md)
-- [Research landscape](./docs/RESEARCH.md)
-- [Product research: SDK, users, and B2B](./docs/PRODUCT_RESEARCH.md)
-- [Roadmap](./ROADMAP.md)
+- [Getting started](./docs/getting-started.md)
+- [Demo guide](./docs/demo.md)
+- [Architecture overview](./docs/architecture.md)
+- [Research landscape](./docs/research.md)
+- [Product research: SDK, users, and B2B](./docs/product-research.md)
+- [Roadmap](./roadmap.md)
 
 ---
 
@@ -61,14 +61,14 @@ OpenArtShield models artist protection as a stack of independent, measurable
 layers. Each is a separate concern with its own command; you can use one, some, or
 all of them. None is a guarantee - the value is in being able to measure each one.
 
-| Layer       | What it does                                                                               | Today                                      | Status                |
-| ----------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ | --------------------- |
-| **Trace**   | Embed an invisible watermark + sidecar so you can later show a file is yours               | `oas embed` / `oas verify` / `oas protect` | implemented           |
-| **Measure** | Quantify how a model "sees" an image via CLIP embedding drift                              | `oas ai-audit`                             | implemented           |
-| **Cloak**   | Experimental perturbation that shifts model-facing embeddings while staying visually close | `oas cloak` (with EOT scoring)             | experimental          |
-| **Audit**   | Run real-world transforms (JPEG, resize, crop, blur, screenshot) and report what survives  | `oas audit`                                | implemented           |
-| **Declare** | Attach provenance / licensing intent (e.g. "no AI training")                               | `oas declare` / `oas optout`               | implemented           |
-| **Poison**  | Data-poisoning techniques against training pipelines                                       | -                                          | research-only, future |
+| Layer       | What it does                                                                               | Today                                        | Status                |
+| ----------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- | --------------------- |
+| **Trace**   | Embed an invisible watermark + sidecar so you can later show a file is yours               | `oas embed` / `oas verify` / `oas protect`   | implemented           |
+| **Measure** | Quantify how a model "sees" an image via CLIP embedding drift                              | `oas ai-audit`                               | implemented           |
+| **Cloak**   | Experimental perturbation that shifts model-facing embeddings while staying visually close | `oas cloak` (with EOT scoring)               | experimental          |
+| **Audit**   | Run real-world transforms (JPEG, resize, crop, blur, screenshot) and report what survives  | `oas audit`                                  | implemented           |
+| **Declare** | Attach provenance / licensing intent (e.g. "no AI training"), durably                      | `oas declare` / `oas optout` / `oas recover` | implemented           |
+| **Poison**  | Data-poisoning techniques against training pipelines                                       | -                                            | research-only, future |
 
 **Trace** and **Declare** make ownership and intent legible. **Cloak** and
 **Poison** try to interfere with how models perceive or learn from an image.
@@ -154,7 +154,7 @@ OpenArtShield is to reveal where a protection signal survives and where it break
 | contrast_1_1          | recovered  |
 | screenshot_simulation | **failed** |
 
-See [`examples/README.md`](examples/README.md) for the full table (with PSNR/SSIM)
+See [`examples/readme.md`](examples/readme.md) for the full table (with PSNR/SSIM)
 and how to reproduce it. An HTML version of this report is produced by
 `oas audit --html`.
 
@@ -200,7 +200,7 @@ The current v0.1 implementation is intentionally much smaller: a simple DCT-base
 - **C2PA Technical Specification / Content Credentials** - [c2pa.org/specifications](https://c2pa.org/specifications/) - [contentcredentials.org](https://contentcredentials.org/).
 - **CLIP: Learning Transferable Visual Models From Natural Language Supervision** - Alec Radford et al. [arXiv:2103.00020](https://arxiv.org/abs/2103.00020).
 
-This research informs OpenArtShield's _honest framing_: perturbation- and watermark-based protections are an arms race, and their value lies in being measured, not assumed. See the [roadmap](ROADMAP.md) for which of these directions might be explored in later versions.
+This research informs OpenArtShield's _honest framing_: perturbation- and watermark-based protections are an arms race, and their value lies in being measured, not assumed. See the [roadmap](roadmap.md) for which of these directions might be explored in later versions.
 
 ---
 
@@ -450,7 +450,7 @@ There are three backends:
   (`onnxruntime-node`, also an optional dependency). Instead of a CLIP proxy,
   the image is encoded to the latent tensor diffusion models actually train and
   denoise on - the surface Glaze, PhotoGuard, and StyleGuard attack (see
-  [`docs/RESEARCH.md`](docs/RESEARCH.md)):
+  [`docs/research.md`](docs/research.md)):
 
   ```bash
   pnpm add onnxruntime-node
@@ -497,7 +497,7 @@ proxy for broader model behavior.
 
 A complete, reproducible transfer experiment - single-model vs. multi-model
 cloaks measured against a held-out CLIP model neither saw - is checked in under
-[`examples/cloak-transfer/`](examples/cloak-transfer/README.md), with real
+[`examples/cloak-transfer/`](examples/cloak-transfer/readme.md), with real
 numbers and an honest reading of them.
 
 > **Caveats.** The `mock` backend does not represent how real AI systems see
@@ -658,7 +658,7 @@ The attacks are deliberately simple CPU proxies for the published methods (the
 purification attack is an image-processing stand-in, not a real diffusion model),
 and `--attacks none` runs the audit with no attacks. This is a measurement layer,
 not a defense: a low survival ratio is evidence the protection was removed. See
-[`docs/RESEARCH.md`](docs/RESEARCH.md) for the sources and where this fits.
+[`docs/research.md`](docs/research.md) for the sources and where this fits.
 
 ### Declare: C2PA Content Credentials with an AI-training opt-out
 
@@ -693,7 +693,7 @@ you, but is not on the C2PA trust list, so validators mark it as unknown - and
 a declaration is a **voluntary-compliance signal** (with legal weight under the
 EU AI Act's TDM-reservation rules), not technical protection. Metadata is also
 stripped by many platforms; the durable-credentials work in
-[`ROADMAP.md`](ROADMAP.md) (v0.8) is about surviving that.
+[`roadmap.md`](roadmap.md) (v0.8) is about surviving that.
 
 ### Opt-out metadata and site files
 
@@ -717,6 +717,50 @@ HTTP-header snippets to complete the setup:
 oas optout-site --dir public --policy-url https://example.com/tdm-policy
 ```
 
+### Durable declarations (survive metadata stripping)
+
+Everything `oas declare` and `oas optout` write dies the moment a platform
+re-encodes the image or someone screenshots it. `oas declare-durable`
+implements the **durable-credentials** pattern: the declaration record goes
+into a manifest store, and its ID (a 60-bit truncated SHA-256) is embedded in
+the pixels themselves as a [TrustMark](https://github.com/adobe/trustmark)
+watermark. `oas recover` decodes the ID from a stripped copy, looks the
+record back up, and integrity-checks it (the stored bytes must hash back to
+the embedded ID). Needs the optional `onnxruntime-node` dependency; the ONNX
+models (~64 MB) download and cache on first use.
+
+```bash
+pnpm add onnxruntime-node
+
+# Declare + stamp: manifest record in ./oas-manifests, recovery ID in the pixels
+oas declare-durable artwork.png --out artwork.durable.png \
+  --creator "Jane Artist" --store oas-manifests
+
+# ...the image gets re-encoded, screenshotted, re-uploaded, metadata is gone...
+
+# Recover the declaration from the pixels alone
+oas recover downloaded-copy.jpg --store oas-manifests
+```
+
+The raw watermark is also available directly - `oas trustmark` embeds up to 8
+ASCII characters (or 61 bits) with BCH error correction, `oas trustmark-decode`
+reads them back:
+
+```bash
+oas trustmark artwork.png --message "oas:demo" --out artwork.tm.png
+oas trustmark-decode artwork.tm.png
+```
+
+Measured on a natural-like test image, the TrustMark payload survived **all
+17** transforms/attacks in our suites (JPEG down to q30, resize, crop, blur,
+screenshot simulation, noisy upscaling, purification proxy), mostly with zero
+corrected bit flips, at ~42-50 dB PSNR - while our classical DCT baseline is
+strongly content-dependent. Embedding takes ~100 ms on CPU. Honest limits: a
+single test image is not a benchmark (reproduce before citing), only the Q
+variant is wired up, aspect ratios beyond 1:2 are rejected, and WAVES-class
+adversarial attacks can still remove any watermark - durable credentials
+raise the cost of casual stripping, nothing more.
+
 ### Print the version
 
 ```bash
@@ -730,7 +774,7 @@ Run `oas <command> --help` for the full option list.
 ## Try a real audit
 
 The repository ships a complete, reproducible example under
-[`examples/`](examples/README.md): a generated source image, its watermarked
+[`examples/`](examples/readme.md): a generated source image, its watermarked
 version, and the JSON + HTML reports produced by the real CLI. After installing
 dependencies you can regenerate all of it:
 
@@ -747,7 +791,7 @@ standalone [`examples/reports/sample-audit.html`](examples/reports/sample-audit.
 In that run the watermark survives light JPEG, brightness, contrast, and mild
 blur, but **fails** under heavier compression, downscaling, cropping, and the
 screenshot-style pipeline (8 / 14 transforms recovered). The honest mix is the
-point - see [`examples/README.md`](examples/README.md) for the full table and how
+point - see [`examples/readme.md`](examples/readme.md) for the full table and how
 to read it.
 
 ---
@@ -756,7 +800,7 @@ to read it.
 
 The repository also ships a complete, reproducible run of the **experimental**
 cloak flow with a real CLIP backend and EOT robustness, under
-[`examples/cloak-eot/`](examples/cloak-eot/README.md). The cloaked image carries a
+[`examples/cloak-eot/`](examples/cloak-eot/readme.md). The cloaked image carries a
 visually-bounded perturbation that increases CLIP embedding drift; it should look
 essentially identical to the original.
 
@@ -797,7 +841,7 @@ bash examples/cloak-eot/commands/run-cloak-eot.sh
 > not AI-proof protection. It does not prevent training and it is not Glaze,
 > Nightshade, or C2PA. CLIP is only one proxy model - a higher drift score means
 > the selected backend changed more under the measured conditions, nothing more.
-> See [`examples/cloak-eot/README.md`](examples/cloak-eot/README.md) for the full
+> See [`examples/cloak-eot/readme.md`](examples/cloak-eot/readme.md) for the full
 > tables, honest caveats, and how to read the minimum-drift floor.
 
 ---
@@ -1034,15 +1078,19 @@ DCT coefficient comparison -> repeated bits -> majority vote -> bytes -> checksu
 - C2PA Content Credentials with the CAWG training/data-mining opt-out
   (`oas declare`, optional `c2pa-node` dependency);
 - machine-readable opt-outs: IPTC XMP, TDMRep, ai.txt (`oas optout`,
-  `oas optout-site`).
+  `oas optout-site`);
+- TrustMark learned watermarking (`oas trustmark`, optional
+  `onnxruntime-node` dependency);
+- durable declarations that survive metadata stripping
+  (`oas declare-durable` / `oas recover`).
 
 **Not solved (and not claimed):**
 
 - guaranteed prevention of AI training;
 - guaranteed protection from style mimicry;
-- universal robustness across arbitrary pipelines and motivated adversaries;
+- universal robustness across arbitrary pipelines and motivated adversaries
+  (WAVES-class adversarial attacks remove any watermark, TrustMark included);
 - legal enforcement or proof of ownership on its own;
-- declarations that survive metadata stripping (durable credentials are v0.8);
 - poisoning.
 
 It is not yet a consumer-grade protection app for artists - the current focus is
@@ -1053,7 +1101,7 @@ not a lock; a cloak is a measured perturbation, not a guarantee.
 
 ## Roadmap
 
-The full, versioned plan lives in [`ROADMAP.md`](ROADMAP.md). In short:
+The full, versioned plan lives in [`roadmap.md`](roadmap.md). In short:
 
 - **v0.1** (current) - DCT watermarking, extraction, deterministic transform audits, PSNR/SSIM/bit-accuracy metrics, JSON reports, CLI, tests, CI.
 - **v0.2** - reproducible examples and better reports (HTML report and example audits already landed; `oas capacity`, visual summaries next).
@@ -1062,11 +1110,11 @@ The full, versioned plan lives in [`ROADMAP.md`](ROADMAP.md). In short:
 - **v0.5** - CLIP/OpenCLIP embedding-drift and semantic-robustness metrics.
 - **v0.6** - adversarial perturbation baselines (Glaze/Mist-style), honestly measured.
 - **v0.7** - Declare layer: C2PA + CAWG opt-out assertion, IPTC/TDMRep/ai.txt (landed - `oas declare`, `oas optout`).
-- **v0.8** - durable credentials: TrustMark watermark backend, manifest recovery via watermark pointer.
+- **v0.8** - durable credentials: TrustMark watermark backend, manifest recovery via watermark pointer (landed - `oas declare-durable`, `oas recover`, `oas trustmark`).
 - **v0.9** - integration surface: browser/WASM package, Docker REST server.
 - **v1.0** - continuous public benchmark, threat model, OpenSSF posture.
 
-See [`ROADMAP.md`](ROADMAP.md) for principles, non-goals, and research directions.
+See [`roadmap.md`](roadmap.md) for principles, non-goals, and research directions.
 
 ---
 

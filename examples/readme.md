@@ -127,5 +127,5 @@ It does **not** mean:
 - that recovery generalizes to other images, sizes, messages, or parameters.
 
 OpenArtShield is a **measurement tool, not a defense**. Treat every result as
-experimental. See the [root README](../README.md) and [ROADMAP](../ROADMAP.md)
+experimental. See the [root README](../readme.md) and [ROADMAP](../roadmap.md)
 for the project's framing and limitations.

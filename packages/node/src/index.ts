@@ -96,6 +96,38 @@ export { writeImageWithXmp, readImageXmp, type WriteXmpOptions } from "./declare
 export { writeSiteOptOut } from "./declare/optout-site.js";
 export type { WriteSiteOptOutOptions, WriteSiteOptOutResult } from "./declare/optout-site.js";
 
+// Durable credentials: manifest store + TrustMark recovery pointer.
+export {
+  DURABLE_ID_BITS,
+  DURABLE_RECORD_VERSION,
+  serializeDurableRecord,
+  durableIdFromRecord,
+  durableIdToBits,
+  durableIdFromBits,
+  bindDurableDeclaration,
+  recoverDurableDeclaration,
+} from "./declare/durable.js";
+export type {
+  DurableRecord,
+  BindDurableOptions,
+  BindDurableResult,
+  RecoverDurableResult,
+} from "./declare/durable.js";
+
+// TrustMark learned watermark (ONNX, optional onnxruntime-node dep).
+export {
+  createTrustmark,
+  upscaleResidual,
+  applyResidualToImage,
+  TRUSTMARK_VARIANTS,
+} from "./trustmark/trustmark.js";
+export type {
+  Trustmark,
+  TrustmarkOptions,
+  TrustmarkVariant,
+  TrustmarkDecodedText,
+} from "./trustmark/trustmark.js";
+
 // High-level SDK API: profile-driven protection bundle + companions.
 export { protectArtwork } from "./protect/protect-artwork.js";
 export type {

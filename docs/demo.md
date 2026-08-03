@@ -3,7 +3,7 @@
 The high-level narrative of the project: what problem it addresses, how the
 layers fit together, what to show, and what not to claim. For the hands-on
 command walkthrough (install, build, and every command below with runnable
-flags), see [GETTING_STARTED.md](./GETTING_STARTED.md).
+flags), see [getting-started.md](./getting-started.md).
 
 ## 1. Problem
 
@@ -36,7 +36,7 @@ being able to measure each one.
 
 ## 3. Architecture
 
-Three packages, strict one-way boundaries (see [ARCHITECTURE.md](./ARCHITECTURE.md)
+Three packages, strict one-way boundaries (see [architecture.md](./architecture.md)
 for data flows and design decisions):
 
 - `@openartshield/core` — pure TypeScript algorithms, metrics, reports. No IO.
@@ -46,7 +46,7 @@ for data flows and design decisions):
 ## 4. What to show
 
 A natural tour follows the layers in order — each step is one command, spelled
-out in [GETTING_STARTED.md](./GETTING_STARTED.md#quickstart):
+out in [getting-started.md](./getting-started.md#quickstart):
 
 1. **Trace** — `oas protect` embeds an invisible watermark and writes an audit
    report plus a sidecar.
@@ -58,11 +58,11 @@ out in [GETTING_STARTED.md](./GETTING_STARTED.md#quickstart):
 Everything runs with the default `mock` backend (no model weights, no network).
 The `mock` backend is a deterministic placeholder, so its cloak numbers are **not
 meaningful** — for real numbers, install the optional CLIP backend
-([instructions](./GETTING_STARTED.md#using-the-real-clip-backend-optional)).
+([instructions](./getting-started.md#using-the-real-clip-backend-optional)).
 
 A full, real CLIP + EOT run with honest numbers is checked in under
-[`examples/cloak-eot/`](../examples/cloak-eot/README.md), and a reproducible
-watermark audit under [`examples/`](../examples/README.md).
+[`examples/cloak-eot/`](../examples/cloak-eot/readme.md), and a reproducible
+watermark audit under [`examples/`](../examples/readme.md).
 
 ## 5. Design highlights
 

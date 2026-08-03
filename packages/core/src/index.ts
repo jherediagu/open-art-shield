@@ -161,6 +161,24 @@ export type {
   BuildAiTxtParams,
 } from "./optout.js";
 
+// TrustMark data layer (pure BCH ECC + 100-bit payload schema; the ONNX
+// encoder/decoder lives in @openartshield/node behind optional deps).
+export { createBchCodec, BCH_POLYNOMIAL, BCH_DECODE_FAILED } from "./trustmark/bch.js";
+export type { BchCodec } from "./trustmark/bch.js";
+export {
+  TRUSTMARK_PAYLOAD_BITS,
+  TRUSTMARK_VERSIONS,
+  isTrustmarkVersion,
+  versionDataBits,
+  encodePayload as encodeTrustmarkPayload,
+  decodePayload as decodeTrustmarkPayload,
+  bitsFromLogits,
+  floatsFromBits,
+  textToBits,
+  bitsToText,
+} from "./trustmark/datalayer.js";
+export type { TrustmarkVersion, DecodedPayload } from "./trustmark/datalayer.js";
+
 // Protection profiles (pure layer combinations; orchestration lives in the CLI).
 export {
   PROTECTION_PROFILE_NAMES,

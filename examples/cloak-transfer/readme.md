@@ -25,7 +25,7 @@ examples/cloak-transfer/
 ```
 
 The source image is the self-owned, procedurally generated original from the
-[cloak-eot example](../cloak-eot/README.md) (CC0; no third-party artwork).
+[cloak-eot example](../cloak-eot/readme.md) (CC0; no third-party artwork).
 
 ## Design
 

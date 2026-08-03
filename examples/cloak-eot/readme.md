@@ -110,7 +110,7 @@ node examples/cloak-eot/commands/generate-original.mjs
 bash examples/cloak-eot/commands/run-cloak-eot.sh
 ```
 
-Unlike the pure-DCT [watermark example](../README.md), these numbers depend on
+Unlike the pure-DCT [watermark example](../readme.md), these numbers depend on
 the CLIP model weights and the ONNX runtime, so they are **approximately**, not
 byte-for-byte, reproducible across machines and library versions.
 

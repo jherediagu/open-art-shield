@@ -1,6 +1,6 @@
 # Product research: making OpenArtShield a real SDK for artists and B2B
 
-This document complements [`RESEARCH.md`](RESEARCH.md) (which covers the
+This document complements [`research.md`](research.md) (which covers the
 adversarial/cloaking science) with the product side: what exists in the market,
 what integrators and artists actually need, which recent techniques we have not
 yet covered, and what it would take to turn OpenArtShield into an SDK that
@@ -42,7 +42,7 @@ Two macro-tailwinds:
    to €15M / 3% turnover; pre-existing systems have until Dec 2026).
    Watermarking and opt-out tooling becomes compliance spend, not optional.
 
-## New technical findings (beyond RESEARCH.md)
+## New technical findings (beyond research.md)
 
 ### Watermarking: what actually holds up
 
@@ -237,7 +237,7 @@ Ranked by (user value × feasibility in our TS/ONNX/CPU stack):
 
 ## Sources
 
-Key additions beyond RESEARCH.md (primary unless noted):
+Key additions beyond research.md (primary unless noted):
 
 - TrustMark — ICCV 2025 — github.com/adobe/trustmark (MIT)
 - VINE / W-Bench — ICLR 2025 — arXiv:2410.18775
