@@ -171,8 +171,9 @@ Planned improvements:
   suites. _(done - on a natural-like test image TrustMark survived all 17
   transforms/attacks including JPEG q30, screenshot simulation, noisy
   upscaling and the purification proxy, mostly with 0 corrected bit flips;
-  the classical DCT baseline is strongly content-dependent and failed on
-  smooth imagery. One image, one run - reproduce before citing.)_
+  the classical DCT baseline survived 8/17 - mild JPEG, light blur,
+  brightness/contrast - and failed resize, crop, screenshot, aggressive JPEG
+  and the removal attacks. One image, one run - reproduce before citing.)_
 
 Goal: provenance that survives the places where metadata dies.
 
@@ -185,12 +186,19 @@ durable credentials raise the cost of _casual_ stripping, nothing more.
 
 Planned improvements:
 
-- `@openartshield/web`: browser package (WASM, optional WebGPU) for
-  watermark/verify, enabling fully client-side protection ("your image never
-  leaves your browser").
-- Docker self-hosted REST server: `protect/verify/audit` plus async jobs and
-  webhooks - the artifact a platform team actually evaluates.
-- Static client-side web app + public verifier as demo.
+- `@openartshield/web`: browser package for watermark/verify, enabling fully
+  client-side protection ("your image never leaves your browser"). _(done -
+  canvas/ImageData IO over the pure core SDK, plus in-browser TrustMark
+  verification through optional `onnxruntime-web` with WebGPU->WASM
+  fallback)_
+- Docker self-hosted REST server: embed/extract/verify/audit/optout behind a
+  framework-free JSON API - the artifact a platform team actually evaluates.
+  _(done - `@openartshield/server`, `docker build -f packages/server/Dockerfile`;
+  verified end-to-end in a container)_
+- Async jobs + webhooks. _(deferred - watermark ops are <1 s and synchronous;
+  queues arrive with the slow layers, i.e. cloaking)_
+- Static client-side web app + public verifier as demo. _(deferred to v1.0 -
+  builds on `@openartshield/web`)_
 
 Goal: meet integrators (B2B) and artists where they are.
 

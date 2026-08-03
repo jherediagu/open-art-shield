@@ -1,0 +1,42 @@
+{
+  "name": "@openartshield/server",
+  "version": "0.1.0",
+  "description": "Self-hosted REST server for OpenArtShield: watermark embed/extract/verify, robustness audits, and opt-out metadata over a JSON API.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "oas-server": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "readme.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openartshield/core": "workspace:*",
+    "@openartshield/node": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

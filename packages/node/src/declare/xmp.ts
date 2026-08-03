@@ -1,5 +1,7 @@
 import { extname } from "node:path";
 import sharp from "sharp";
+import type { PixelImage } from "@openartshield/core";
+import { pixelImageToSharp } from "../io/sharp-utils.js";
 
 // XMP embedding for the opt-out layer. The packet itself is built by the pure
 // buildXmpDataMiningPacket in @openartshield/core; this file just re-encodes
@@ -43,6 +45,28 @@ export async function writeImageWithXmp(
 ): Promise<void> {
   const pipeline = sharp(input).keepMetadata().withXmp(xmpPacket);
   await applyOutputFormat(pipeline, output, options.quality).toFile(output);
+}
+
+/**
+ * Encode a PixelImage to a buffer with an XMP packet attached. The buffer
+ * variant of writeImageWithXmp, for servers and pipelines without files.
+ */
+export async function encodeImageWithXmp(
+  image: PixelImage,
+  format: "png" | "jpeg" | "webp",
+  xmpPacket: string,
+  options: WriteXmpOptions = {},
+): Promise<Buffer> {
+  const pipeline = pixelImageToSharp(image).withXmp(xmpPacket);
+  const opts = options.quality !== undefined ? { quality: options.quality } : {};
+  switch (format) {
+    case "png":
+      return pipeline.png().toBuffer();
+    case "jpeg":
+      return pipeline.flatten().jpeg(opts).toBuffer();
+    case "webp":
+      return pipeline.webp(opts).toBuffer();
+  }
 }
 
 /** Read the XMP packet of an image, or null when it has none. */
