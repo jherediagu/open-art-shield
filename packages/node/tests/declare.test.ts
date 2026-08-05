@@ -167,7 +167,8 @@ describe("generateDeclareKeys", async () => {
     expect(stdout).toContain("E-mail Protection");
     expect(stdout).toContain("CA:FALSE");
     // The "/" in the name must not have leaked into the subject fields.
-    expect(stdout).toContain("O=Test Artist");
+    // (LibreSSL prints "O=...", OpenSSL 3 prints "O = ..." - accept both.)
+    expect(stdout).toMatch(/O ?= ?Test Artist/);
   });
 
   it("validates its inputs", async () => {
