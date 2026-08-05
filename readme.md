@@ -49,9 +49,12 @@ listed below.
 - [Getting started](./docs/getting-started.md)
 - [Demo guide](./docs/demo.md)
 - [Architecture overview](./docs/architecture.md)
+- [Threat model](./docs/threat-model.md)
+- [Protection benchmark](./docs/benchmarks/latest.md)
 - [Research landscape](./docs/research.md)
 - [Product research: SDK, users, and B2B](./docs/product-research.md)
 - [Roadmap](./roadmap.md)
+- [Security policy](./security.md)
 
 ---
 
@@ -1118,7 +1121,7 @@ The full, versioned plan lives in [`roadmap.md`](roadmap.md). In short:
 - **v0.7** - Declare layer: C2PA + CAWG opt-out assertion, IPTC/TDMRep/ai.txt (landed - `oas declare`, `oas optout`).
 - **v0.8** - durable credentials: TrustMark watermark backend, manifest recovery via watermark pointer (landed - `oas declare-durable`, `oas recover`, `oas trustmark`).
 - **v0.9** - integration surface: browser package, Docker REST server (landed - `@openartshield/web`, `@openartshield/server`).
-- **v1.0** - continuous public benchmark, threat model, OpenSSF posture.
+- **v1.0** - benchmark posture (landed): reproducible public [benchmark](docs/benchmarks/latest.md), [threat model](docs/threat-model.md), [security policy](security.md), and a client-side [verifier web app](examples/web-verifier).
 
 See [`roadmap.md`](roadmap.md) for principles, non-goals, and research directions.
 

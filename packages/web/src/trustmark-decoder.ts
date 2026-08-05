@@ -85,6 +85,12 @@ export function trustmarkInputFromImage(image: PixelImage): Float32Array {
 export type TrustmarkWebDecoderOptions = {
   /** URL of the decoder ONNX. Default: Adobe's CDN, variant Q. */
   modelUrl?: string;
+  /**
+   * Raw decoder model bytes, for when the model URL is not CORS-reachable
+   * from the page (e.g. a user-picked local decoder_Q.onnx file). Takes
+   * precedence over modelUrl.
+   */
+  modelData?: ArrayBuffer;
   /** onnxruntime execution providers, tried in order. Default WebGPU->WASM. */
   executionProviders?: string[];
 };
@@ -111,7 +117,9 @@ export function createTrustmarkWebDecoder(
     if (!sessionPromise) {
       sessionPromise = (async () => {
         const ort = await loadOnnxRuntimeWeb();
-        const session = await ort.InferenceSession.create(modelUrl, { executionProviders });
+        const session = await ort.InferenceSession.create(options.modelData ?? modelUrl, {
+          executionProviders,
+        });
         return { ort, session };
       })();
       sessionPromise.catch(() => {

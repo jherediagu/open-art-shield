@@ -1,0 +1,19 @@
+{
+  "name": "@openartshield/web-verifier",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static, fully client-side verifier page built on @openartshield/web.",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openartshield/web": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5"
+  }
+}
