@@ -1,0 +1,46 @@
+name: Benchmark
+
+# The reproducible protection benchmark (protections x conditions x metrics).
+# Runs weekly and on demand; results land in the public job summary and as a
+# downloadable artifact. Deterministic inputs - a diff against
+# docs/benchmarks/latest.md means the code changed, not the dice.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC
+
+jobs:
+  benchmark:
+    name: Protections x attacks x metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install optional TrustMark runtime
+        run: pnpm --filter @openartshield/node add onnxruntime-node
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run benchmark
+        run: node scripts/benchmark.mjs --out-dir bench-out >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: bench-out/

@@ -1,0 +1,295 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-03T20:43:39.343Z",
+  "method": {
+    "message": "oas-demo",
+    "seed": 123,
+    "imageSize": "512x384",
+    "images": ["natural-like", "high-noise", "smooth-gradient"],
+    "conditions": [
+      "identity",
+      "jpeg_quality_95",
+      "jpeg_quality_85",
+      "jpeg_quality_70",
+      "resize_75",
+      "resize_50",
+      "center_crop_90",
+      "gaussian_blur_0_75",
+      "gaussian_blur_1_25",
+      "brightness_0_9",
+      "brightness_1_1",
+      "contrast_0_9",
+      "contrast_1_1",
+      "screenshot_simulation",
+      "jpeg_quality_50",
+      "jpeg_quality_30",
+      "gaussian_purify",
+      "noisy_upscale"
+    ],
+    "note": "Deterministic synthetic images (seeds in scripts/benchmark.mjs). Survival = exact payload recovery after the condition. This measures robustness to common transforms and published removal attacks, NOT resistance to a dedicated adversary (WAVES-class attacks remove any watermark)."
+  },
+  "trustmarkIncluded": true,
+  "rows": [
+    {
+      "protection": "dct-s8",
+      "kind": "classical DCT",
+      "image": "natural-like",
+      "quality": {
+        "psnr": 54.13,
+        "ssim": 0.9988
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": false,
+        "resize_50": false,
+        "center_crop_90": false,
+        "gaussian_blur_0_75": true,
+        "gaussian_blur_1_25": false,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": false,
+        "jpeg_quality_50": false,
+        "jpeg_quality_30": false,
+        "gaussian_purify": false,
+        "noisy_upscale": false
+      }
+    },
+    {
+      "protection": "dct-s8",
+      "kind": "classical DCT",
+      "image": "high-noise",
+      "quality": {
+        "psnr": 47.7,
+        "ssim": 0.9996
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": false,
+        "resize_50": false,
+        "center_crop_90": false,
+        "gaussian_blur_0_75": false,
+        "gaussian_blur_1_25": false,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": false,
+        "jpeg_quality_50": false,
+        "jpeg_quality_30": false,
+        "gaussian_purify": false,
+        "noisy_upscale": false
+      }
+    },
+    {
+      "protection": "dct-s8",
+      "kind": "classical DCT",
+      "image": "smooth-gradient",
+      "quality": {
+        "psnr": 59.2,
+        "ssim": 0.9987
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": false,
+        "resize_75": true,
+        "resize_50": true,
+        "center_crop_90": false,
+        "gaussian_blur_0_75": true,
+        "gaussian_blur_1_25": true,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": false,
+        "jpeg_quality_50": false,
+        "jpeg_quality_30": false,
+        "gaussian_purify": true,
+        "noisy_upscale": true
+      }
+    },
+    {
+      "protection": "dct-s16",
+      "kind": "classical DCT",
+      "image": "natural-like",
+      "quality": {
+        "psnr": 50.97,
+        "ssim": 0.9975
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": false,
+        "resize_50": false,
+        "center_crop_90": false,
+        "gaussian_blur_0_75": true,
+        "gaussian_blur_1_25": false,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": false,
+        "jpeg_quality_50": true,
+        "jpeg_quality_30": false,
+        "gaussian_purify": false,
+        "noisy_upscale": true
+      }
+    },
+    {
+      "protection": "dct-s16",
+      "kind": "classical DCT",
+      "image": "high-noise",
+      "quality": {
+        "psnr": 46.37,
+        "ssim": 0.9995
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": false,
+        "resize_50": false,
+        "center_crop_90": false,
+        "gaussian_blur_0_75": false,
+        "gaussian_blur_1_25": false,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": false,
+        "jpeg_quality_50": true,
+        "jpeg_quality_30": false,
+        "gaussian_purify": false,
+        "noisy_upscale": true
+      }
+    },
+    {
+      "protection": "dct-s16",
+      "kind": "classical DCT",
+      "image": "smooth-gradient",
+      "quality": {
+        "psnr": 53.18,
+        "ssim": 0.9949
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": true,
+        "resize_50": true,
+        "center_crop_90": false,
+        "gaussian_blur_0_75": true,
+        "gaussian_blur_1_25": true,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": false,
+        "jpeg_quality_50": false,
+        "jpeg_quality_30": false,
+        "gaussian_purify": true,
+        "noisy_upscale": true
+      }
+    },
+    {
+      "protection": "trustmark-Q",
+      "kind": "learned (TrustMark, BCH_5)",
+      "image": "natural-like",
+      "quality": {
+        "psnr": 49.99,
+        "ssim": 0.9988
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": true,
+        "resize_50": true,
+        "center_crop_90": true,
+        "gaussian_blur_0_75": true,
+        "gaussian_blur_1_25": true,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": true,
+        "jpeg_quality_50": true,
+        "jpeg_quality_30": true,
+        "gaussian_purify": true,
+        "noisy_upscale": true
+      }
+    },
+    {
+      "protection": "trustmark-Q",
+      "kind": "learned (TrustMark, BCH_5)",
+      "image": "high-noise",
+      "quality": {
+        "psnr": 40.25,
+        "ssim": 0.9988
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": false,
+        "resize_50": true,
+        "center_crop_90": true,
+        "gaussian_blur_0_75": true,
+        "gaussian_blur_1_25": true,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": true,
+        "jpeg_quality_50": true,
+        "jpeg_quality_30": false,
+        "gaussian_purify": true,
+        "noisy_upscale": true
+      }
+    },
+    {
+      "protection": "trustmark-Q",
+      "kind": "learned (TrustMark, BCH_5)",
+      "image": "smooth-gradient",
+      "quality": {
+        "psnr": 53.61,
+        "ssim": 0.9986
+      },
+      "conditions": {
+        "identity": true,
+        "jpeg_quality_95": true,
+        "jpeg_quality_85": true,
+        "jpeg_quality_70": true,
+        "resize_75": true,
+        "resize_50": true,
+        "center_crop_90": true,
+        "gaussian_blur_0_75": true,
+        "gaussian_blur_1_25": true,
+        "brightness_0_9": true,
+        "brightness_1_1": true,
+        "contrast_0_9": true,
+        "contrast_1_1": true,
+        "screenshot_simulation": true,
+        "jpeg_quality_50": true,
+        "jpeg_quality_30": false,
+        "gaussian_purify": true,
+        "noisy_upscale": true
+      }
+    }
+  ]
+}

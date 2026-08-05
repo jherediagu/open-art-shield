@@ -36,6 +36,19 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@20.19.43)
 
+  examples/web-verifier:
+    dependencies:
+      '@openartshield/web':
+        specifier: workspace:*
+        version: link:../../packages/web
+    devDependencies:
+      tsup:
+        specifier: ^8.1.0
+        version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+
   packages/cli:
     dependencies:
       '@openartshield/core':

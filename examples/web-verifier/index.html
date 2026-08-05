@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenArtShield verifier</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.webgpu.min.mjs"
+        }
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        max-width: 46rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      section {
+        border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+      }
+      textarea {
+        width: 100%;
+        min-height: 7rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85rem;
+      }
+      img#preview {
+        max-width: 100%;
+        max-height: 260px;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+      }
+      [data-kind] {
+        margin-top: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.95rem;
+      }
+      [data-kind="ok"] {
+        background: color-mix(in srgb, green 18%, transparent);
+      }
+      [data-kind="bad"] {
+        background: color-mix(in srgb, crimson 18%, transparent);
+      }
+      [data-kind="info"] {
+        background: color-mix(in srgb, currentColor 10%, transparent);
+      }
+      button {
+        padding: 0.4rem 0.9rem;
+      }
+      footer {
+        font-size: 0.85rem;
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OpenArtShield verifier</h1>
+    <p>
+      Check whether an image carries an OpenArtShield watermark.
+      <strong>Everything runs in your browser - the image is never uploaded.</strong>
+    </p>
+
+    <section>
+      <h2>1. Pick an image</h2>
+      <input id="image-input" type="file" accept="image/*" />
+      <p id="image-status"></p>
+      <img id="preview" alt="Selected image preview" hidden />
+    </section>
+
+    <section>
+      <h2>2a. Verify a DCT watermark (with its sidecar)</h2>
+      <p>
+        Paste the <code>*.openartshield.json</code> sidecar that <code>oas protect</code> produced
+        next to the image.
+      </p>
+      <textarea
+        id="sidecar-input"
+        placeholder='{"version": "...", "algorithm": "dct-basic", "seed": 123, "messageLength": 34, "repetitions": 5, ...}'
+      ></textarea>
+      <p><button id="verify-button" disabled>Verify watermark</button></p>
+      <p id="verify-result"></p>
+    </section>
+
+    <section>
+      <h2>2b. Decode a TrustMark watermark</h2>
+      <p>
+        No sidecar needed. The ~47&nbsp;MB decoder model loads from Adobe's CDN on first use (or
+        pick a local <code>decoder_Q.onnx</code> if your network blocks it) and runs locally via
+        WebGPU/WASM.
+      </p>
+      <p>
+        <label
+          >Local model (optional): <input id="trustmark-model" type="file" accept=".onnx"
+        /></label>
+      </p>
+      <p><button id="trustmark-button" disabled>Decode TrustMark</button></p>
+      <p id="trustmark-result"></p>
+    </section>
+
+    <footer>
+      <p>
+        A verified mark shows a signal survived - absence of one proves nothing, and a motivated
+        adversary can remove any watermark. See the project's threat model for the honest framing.
+      </p>
+    </footer>
+
+    <script type="module" src="./dist/verifier.js"></script>
+  </body>
+</html>

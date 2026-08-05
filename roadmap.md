@@ -207,8 +207,17 @@ Goal: meet integrators (B2B) and artists where they are.
 Planned improvements:
 
 - Continuous, reproducible public benchmark (protections x attacks x
-  metrics, CopyrightMeter-style) published from CI.
-- Documented threat model; OpenSSF Best Practices badge and Scorecard.
+  metrics, CopyrightMeter-style) published from CI. _(done -
+  `scripts/benchmark.mjs` with deterministic inputs, committed baseline in
+  [`docs/benchmarks/latest.md`](docs/benchmarks/latest.md), weekly/manual
+  workflow publishing to the CI job summary)_
+- Documented threat model. _(done - [`docs/threat-model.md`](docs/threat-model.md):
+  three adversary tiers, per-layer claims and non-claims)_
+- Security policy. _(done - [`security.md`](security.md); the OpenSSF badge
+  application and Scorecard are a repo-owner step)_
+- Public verifier web app. _(done - [`examples/web-verifier`](examples/web-verifier),
+  fully client-side: DCT verify with sidecar + in-browser TrustMark decode
+  via WebGPU/WASM; verified end-to-end in Chrome)_
 - Position OpenArtShield as the reproducible harness that measures what
   actually holds up.
 
