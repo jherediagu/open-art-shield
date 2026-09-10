@@ -5,11 +5,12 @@
 #   docker run --rm -p 8787:8787 openartshield-server
 #
 # The API is JSON over HTTP: GET /healthz, POST /v1/{embed,extract,verify,audit,optout}.
+# Optional access control: -e OAS_API_KEYS=k1,k2 -e OAS_RATE_LIMIT=60/1m (see readme.md).
 
 FROM node:22-slim AS build
 RUN corepack enable
 WORKDIR /app
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json tsconfig.base.json ./
+COPY .npmrc pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json tsconfig.base.json ./
 COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter "@openartshield/server..." build

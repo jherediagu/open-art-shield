@@ -8,3 +8,8 @@ pnpm-lock.yaml
 examples/reports/
 examples/cloak-eot/reports/
 examples/cloak-transfer/reports/
+
+# Docs site: generated content and build cache
+website/.astro/
+website/src/content/docs/
+website/public/verify/

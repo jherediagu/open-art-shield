@@ -36,10 +36,40 @@ curl -s localhost:8787/v1/embed -H 'content-type: application/json' \
   -d "{\"image\": \"$(base64 -i artwork.png)\", \"message\": \"artist=jane\", \"seed\": 123}"
 ```
 
+## Access control
+
+Off by default so the container works as a building block behind your own
+gateway. Turn it on when the port is reachable by anyone you don't fully
+trust:
+
+| Variable          | Example | Effect                                                                 |
+| ----------------- | ------- | ---------------------------------------------------------------------- |
+| `OAS_API_KEYS`    | `k1,k2` | Require `Authorization: Bearer <key>` or `x-api-key` on every `/v1/*`  |
+| `OAS_RATE_LIMIT`  | `60/1m` | Fixed window per key (or per client IP when unkeyed); `429` past it    |
+| `OAS_TRUST_PROXY` | `1`     | Read the client IP from `x-forwarded-for` (only behind your own proxy) |
+
+```bash
+docker run --rm -p 8787:8787 -e OAS_API_KEYS=$(openssl rand -hex 24) -e OAS_RATE_LIMIT=120/1m openartshield-server
+```
+
+Responses carry `ratelimit-limit`, `ratelimit-remaining`, and
+`ratelimit-reset` (seconds); `429` adds `retry-after`. `GET /healthz` is never
+gated. Keys are compared in constant time. Limits are per process and in
+memory: a multi-instance deployment should rate-limit at the edge.
+
+Programmatic use takes the same options:
+
+```ts
+import { createApp } from "@openartshield/server";
+
+createApp({ apiKeys: ["k1"], rateLimit: { max: 60, windowMs: 60_000 } }).listen(8787);
+```
+
 ## Honest limits
 
 - v1 is synchronous only: no job queue or webhooks yet (they arrive with the
   slow layers - cloaking needs them, watermarking does not).
-- No auth: put it behind your gateway; it is a self-hosted building block.
+- Access control is a single-process building block, not a billing or tenant
+  system.
 - The C2PA/TrustMark layers need their optional native dependencies and are
   not exposed over HTTP yet.

@@ -209,7 +209,34 @@ This research informs OpenArtShield's _honest framing_: perturbation- and waterm
 
 ## Installation
 
-OpenArtShield is a pnpm monorepo. To work on it locally:
+The packages are published to npm under the `@openartshield` scope:
+
+```bash
+# CLI (the `oas` binary)
+npm install -g @openartshield/cli
+
+# SDK + Node image IO and transforms
+npm install @openartshield/node
+
+# SDK only (pure, no image IO - runs anywhere JavaScript runs)
+npm install @openartshield/core
+
+# Browser bindings (canvas/ImageData IO, in-browser TrustMark verify)
+npm install @openartshield/web
+
+# Self-hosted REST server (or `docker build -f packages/server/Dockerfile .`)
+npm install @openartshield/server
+```
+
+Or try it without installing anything:
+
+```bash
+npx @openartshield/cli protect artwork.png --message "artist=jane"
+```
+
+> The Node, CLI and server packages depend on [`sharp`](https://sharp.pixelplumbing.com/) for image decoding/encoding and transformations. The C2PA, TrustMark and CLIP layers need optional peer dependencies (`c2pa-node`, `onnxruntime-node`, `@huggingface/transformers`) that you install only if you use them.
+
+To work on the repository itself (pnpm monorepo):
 
 ```bash
 git clone https://github.com/jherediagu/open-art-shield.git
@@ -217,21 +244,6 @@ cd open-art-shield
 pnpm install
 pnpm build
 ```
-
-The published packages (once released) will be installable individually:
-
-```bash
-# SDK only (pure, no image IO)
-npm install @openartshield/core
-
-# SDK + Node image IO and transforms
-npm install @openartshield/node
-
-# CLI
-npm install -g @openartshield/cli
-```
-
-> The Node and CLI packages depend on [`sharp`](https://sharp.pixelplumbing.com/) for image decoding/encoding and transformations.
 
 ---
 

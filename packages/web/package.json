@@ -3,6 +3,27 @@
   "version": "0.1.0",
   "description": "Browser bindings for OpenArtShield: ImageData/canvas IO for the pure core SDK, plus in-browser TrustMark verification. Your image never leaves the page.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jherediagu/open-art-shield.git",
+    "directory": "packages/web"
+  },
+  "homepage": "https://github.com/jherediagu/open-art-shield#readme",
+  "bugs": {
+    "url": "https://github.com/jherediagu/open-art-shield/issues"
+  },
+  "keywords": [
+    "watermark",
+    "browser",
+    "canvas",
+    "trustmark",
+    "onnxruntime-web",
+    "client-side",
+    "verify"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -15,7 +36,8 @@
   },
   "files": [
     "dist",
-    "readme.md"
+    "readme.md",
+    "LICENSE"
   ],
   "sideEffects": false,
   "publishConfig": {
@@ -34,5 +56,13 @@
     "tsup": "^8.1.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
+  },
+  "peerDependencies": {
+    "onnxruntime-web": ">=1.19.0"
+  },
+  "peerDependenciesMeta": {
+    "onnxruntime-web": {
+      "optional": true
+    }
   }
 }

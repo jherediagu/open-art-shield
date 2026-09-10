@@ -3,6 +3,27 @@
   "version": "0.1.0",
   "description": "Self-hosted REST server for OpenArtShield: watermark embed/extract/verify, robustness audits, and opt-out metadata over a JSON API.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jherediagu/open-art-shield.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://github.com/jherediagu/open-art-shield#readme",
+  "bugs": {
+    "url": "https://github.com/jherediagu/open-art-shield/issues"
+  },
+  "keywords": [
+    "watermark",
+    "rest-api",
+    "self-hosted",
+    "docker",
+    "image-protection",
+    "opt-out",
+    "c2pa"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -18,7 +39,8 @@
   },
   "files": [
     "dist",
-    "readme.md"
+    "readme.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"

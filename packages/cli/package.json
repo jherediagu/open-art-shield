@@ -3,13 +3,36 @@
   "version": "0.1.0",
   "description": "Command-line interface for OpenArtShield: embed, extract, and audit invisible image watermarks.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jherediagu/open-art-shield.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/jherediagu/open-art-shield#readme",
+  "bugs": {
+    "url": "https://github.com/jherediagu/open-art-shield/issues"
+  },
+  "keywords": [
+    "watermark",
+    "cli",
+    "image-protection",
+    "c2pa",
+    "trustmark",
+    "opt-out",
+    "ai-act",
+    "robustness-audit"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "type": "module",
   "bin": {
     "oas": "./dist/index.js"
   },
   "files": [
     "dist",
-    "readme.md"
+    "readme.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"

@@ -12,6 +12,7 @@ import {
   type AuditConfig,
 } from "@openartshield/core";
 import { decodeImage, embedAndAudit, encodeImage, encodeImageWithXmp } from "@openartshield/node";
+import { createAccessControl, type AccessOptions } from "./access.js";
 
 // A framework-free JSON API over node:http. Images travel as base64 inside
 // JSON bodies - deliberately boring: no multipart parsing, no extra
@@ -213,14 +214,20 @@ const ROUTES: Record<string, JsonHandler> = {
   "/v1/optout": handleOptOut,
 };
 
-export type CreateAppOptions = {
+export type CreateAppOptions = AccessOptions & {
   /** Max accepted request body in bytes. Default 64 MiB. */
   maxBodyBytes?: number;
 };
 
-function sendJson(res: ServerResponse, status: number, payload: unknown): void {
+function sendJson(
+  res: ServerResponse,
+  status: number,
+  payload: unknown,
+  headers: Record<string, string> = {},
+): void {
   const body = JSON.stringify(payload);
   res.writeHead(status, {
+    ...headers,
     "content-type": "application/json; charset=utf-8",
     "content-length": Buffer.byteLength(body),
   });
@@ -250,16 +257,26 @@ async function readBody(req: IncomingMessage, maxBytes: number): Promise<Record<
 /** Create the OpenArtShield HTTP server (not yet listening). */
 export function createApp(options: CreateAppOptions = {}): Server {
   const maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+  const access = createAccessControl(options);
 
   return createServer(async (req, res) => {
     const url = (req.url ?? "/").split("?")[0];
+    let accessHeaders: Record<string, string> = {};
 
     try {
+      // Health stays unauthenticated and unmetered so probes never lock out.
       if (url === "/healthz") {
         if (req.method !== "GET") throw new HttpError(405, "Use GET.");
         sendJson(res, 200, { ok: true, version: SERVER_VERSION });
         return;
       }
+
+      const decision = access.check(req);
+      if (!decision.allowed) {
+        sendJson(res, decision.status, { error: decision.error }, decision.headers);
+        return;
+      }
+      accessHeaders = decision.headers;
 
       const handler = ROUTES[url];
       if (handler === undefined) {
@@ -272,12 +289,17 @@ export function createApp(options: CreateAppOptions = {}): Server {
 
       const body = await readBody(req, maxBodyBytes);
       const result = await handler(body);
-      sendJson(res, 200, result);
+      sendJson(res, 200, result, accessHeaders);
     } catch (error) {
       if (error instanceof HttpError) {
-        sendJson(res, error.status, { error: error.message });
+        sendJson(res, error.status, { error: error.message }, accessHeaders);
       } else {
-        sendJson(res, 500, { error: error instanceof Error ? error.message : "Internal error." });
+        sendJson(
+          res,
+          500,
+          { error: error instanceof Error ? error.message : "Internal error." },
+          accessHeaders,
+        );
       }
     }
   });

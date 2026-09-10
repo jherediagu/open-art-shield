@@ -13,7 +13,19 @@ The `node` and `cli` packages use [`sharp`](https://sharp.pixelplumbing.com/) fo
 image decoding/encoding; it installs prebuilt binaries automatically on common
 platforms.
 
-## Install and build
+## Install
+
+The fastest path is npm, no clone needed:
+
+```bash
+npm install -g @openartshield/cli   # the `oas` binary
+npm install @openartshield/node     # the SDK, for your own code
+```
+
+Everything below also works from the published packages; the clone is only
+for contributing or running the examples and benchmark in place.
+
+## Build from source
 
 ```bash
 git clone https://github.com/jherediagu/open-art-shield.git

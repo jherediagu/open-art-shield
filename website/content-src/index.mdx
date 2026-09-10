@@ -1,0 +1,69 @@
+---
+title: OpenArtShield
+description: Watermark, declare, cloak, and measure how much of your image protection actually survives.
+template: splash
+hero:
+  tagline: An open-source toolkit for protecting visual work from unauthorized AI use, and for measuring what actually holds up.
+  actions:
+    - text: Get started in 2 minutes
+      link: "{{base}}/guides/getting-started/"
+      icon: right-arrow
+    - text: Verify an image in your browser
+      link: "{{base}}/verify/"
+      icon: external
+      variant: minimal
+      attrs:
+        target: _self
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+**OpenArtShield does not make images AI-proof.** It applies real protection layers,
+runs them through the transforms and removal attacks that actually happen to images
+online, and reports how much survived. Every claim on this site is reproducible from
+the repository.
+
+<CardGrid stagger>
+  <Card title="Trace" icon="magnifier">
+    Invisible DCT and TrustMark watermarks with a sidecar, plus `oas verify` to recover the payload
+    later.
+  </Card>
+  <Card title="Declare" icon="document">
+    Signed C2PA Content Credentials carrying a machine-readable AI-training opt-out (CAWG), IPTC
+    XMP, TDMRep and `ai.txt`.
+  </Card>
+  <Card title="Cloak" icon="warning">
+    Experimental embedding perturbations scored across transforms and models. Friction, not
+    protection, and documented as such.
+  </Card>
+  <Card title="Measure" icon="approve-check">
+    Robustness audits, published removal attacks, AI-perception drift, and a weekly public benchmark
+    from CI.
+  </Card>
+</CardGrid>
+
+## Install
+
+```bash
+npm install -g @openartshield/cli
+oas protect artwork.png --message "artist=jane"
+```
+
+The same pipeline is available as a Node SDK (`@openartshield/node`), a pure
+browser package (`@openartshield/web`), and a self-hosted REST server
+(`@openartshield/server`, one `docker build`). See [Install]({{base}}/install/).
+
+## What survives
+
+From the [continuous benchmark]({{base}}/reference/benchmark/): deterministic inputs,
+18 transforms and published attacks, exact payload recovery required.
+
+| Protection  | Natural-like image | Survived |
+| ----------- | -----------------: | -------: |
+| DCT s=8     |           54.13 dB |     9/18 |
+| DCT s=16    |           50.97 dB |    11/18 |
+| TrustMark Q |           49.99 dB |    18/18 |
+
+Robustness to common transforms is not resistance to a dedicated adversary.
+The [threat model]({{base}}/reference/threat-model/) says exactly what each layer claims
+and does not claim.

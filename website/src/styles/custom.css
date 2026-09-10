@@ -1,0 +1,15 @@
+/* OpenArtShield docs: a restrained accent that reads as "seal / stamp" on
+   both grounds, and tabular figures for the benchmark tables. */
+:root {
+  --sl-color-accent-low: #dfe6f5;
+  --sl-color-accent: #26468f;
+  --sl-color-accent-high: #1a2f63;
+}
+:root[data-theme="dark"] {
+  --sl-color-accent-low: #1e2a45;
+  --sl-color-accent: #8aa6e8;
+  --sl-color-accent-high: #c5d3f5;
+}
+table {
+  font-variant-numeric: tabular-nums;
+}

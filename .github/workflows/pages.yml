@@ -1,0 +1,74 @@
+name: Pages
+
+# Publishes the documentation site (website/) with the client-side verifier
+# mounted at /verify/. Set the repository variables BASE_PATH="/" and
+# SITE_URL="https://<domain>" once a custom domain is configured; the defaults
+# are the project-pages values.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "examples/web-verifier/**"
+      - "packages/web/**"
+      - "packages/core/**"
+      - "docs/**"
+      - "readme.md"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build site and verifier
+    runs-on: ubuntu-latest
+    env:
+      BASE_PATH: ${{ vars.BASE_PATH || '/open-art-shield' }}
+      SITE_URL: ${{ vars.SITE_URL || 'https://jherediagu.github.io' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build verifier
+        run: pnpm --filter @openartshield/web-verifier... build
+
+      - name: Build site (syncs docs and mounts the verifier at /verify/)
+        run: pnpm --filter @openartshield/website build:site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
