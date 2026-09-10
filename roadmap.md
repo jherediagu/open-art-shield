@@ -224,6 +224,23 @@ Planned improvements:
 Goal: make honesty the differentiator - "know exactly how much your
 protection survives."
 
+## v1.1 - Distribution
+
+Planned improvements:
+
+- Publish the five packages to npm under `@openartshield`, versioned in
+  lockstep with changesets and released from CI. _(done - `.changeset/`,
+  `.github/workflows/release.yml`)_
+- Documentation site generated from the repository markdown, with the
+  client-side verifier hosted at `/verify/`. _(done - `website/`,
+  `.github/workflows/pages.yml`)_
+- API keys and rate limiting for the self-hosted server. _(done -
+  `OAS_API_KEYS`, `OAS_RATE_LIMIT`, `OAS_TRUST_PROXY`)_
+- Declare the heavy native/ML layers as optional peer dependencies so the
+  base install stays light. _(done)_
+
+Goal: make the toolkit installable and verifiable without cloning the repo.
+
 ## Non-goals
 
 OpenArtShield does not aim to:

@@ -3,6 +3,28 @@
   "version": "0.1.0",
   "description": "Pure TypeScript SDK for invisible DCT watermarking, payload encoding, and robustness audit primitives.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jherediagu/open-art-shield.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/jherediagu/open-art-shield#readme",
+  "bugs": {
+    "url": "https://github.com/jherediagu/open-art-shield/issues"
+  },
+  "keywords": [
+    "watermark",
+    "invisible-watermark",
+    "dct",
+    "image-protection",
+    "provenance",
+    "c2pa",
+    "robustness",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -15,7 +37,8 @@
   },
   "files": [
     "dist",
-    "readme.md"
+    "readme.md",
+    "LICENSE"
   ],
   "sideEffects": false,
   "publishConfig": {

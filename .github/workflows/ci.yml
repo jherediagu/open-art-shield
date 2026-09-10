@@ -40,3 +40,28 @@ jobs:
 
       - name: Check formatting
         run: pnpm format:check
+
+  site:
+    name: Docs site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build verifier
+        run: pnpm --filter @openartshield/web-verifier... build
+
+      - name: Build site
+        run: pnpm --filter @openartshield/website build:site

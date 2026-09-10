@@ -3,6 +3,27 @@
   "version": "0.1.0",
   "description": "Node.js image IO and real-world transformation simulations for OpenArtShield, powered by sharp.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jherediagu/open-art-shield.git",
+    "directory": "packages/node"
+  },
+  "homepage": "https://github.com/jherediagu/open-art-shield#readme",
+  "bugs": {
+    "url": "https://github.com/jherediagu/open-art-shield/issues"
+  },
+  "keywords": [
+    "watermark",
+    "image-protection",
+    "sharp",
+    "c2pa",
+    "trustmark",
+    "opt-out",
+    "robustness"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -15,7 +36,8 @@
   },
   "files": [
     "dist",
-    "readme.md"
+    "readme.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"
@@ -34,5 +56,21 @@
     "tsup": "^8.1.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": ">=3.0.0",
+    "c2pa-node": ">=0.5.0",
+    "onnxruntime-node": ">=1.17.0"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    },
+    "c2pa-node": {
+      "optional": true
+    },
+    "onnxruntime-node": {
+      "optional": true
+    }
   }
 }

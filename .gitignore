@@ -13,3 +13,8 @@ coverage/
 *.tmp
 *.tmp.*
 /tmp-test-output/
+
+# Docs site: generated at build time from the repository markdown
+website/.astro/
+website/src/content/docs/
+website/public/verify/

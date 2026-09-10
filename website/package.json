@@ -1,0 +1,17 @@
+{
+  "name": "@openartshield/website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Documentation site for OpenArtShield (Astro Starlight). Content is synced from the repository's markdown at build time.",
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-docs.mjs",
+    "dev": "node scripts/sync-docs.mjs && astro dev",
+    "build:site": "node scripts/sync-docs.mjs && astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.0",
+    "astro": "^7.3.2"
+  }
+}
