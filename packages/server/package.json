@@ -1,6 +1,6 @@
 {
   "name": "@openartshield/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Self-hosted REST server for OpenArtShield: watermark embed/extract/verify, robustness audits, and opt-out metadata over a JSON API.",
   "license": "Apache-2.0",
   "repository": {

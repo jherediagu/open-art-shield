@@ -1,6 +1,6 @@
 {
   "name": "@openartshield/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Command-line interface for OpenArtShield: embed, extract, and audit invisible image watermarks.",
   "license": "Apache-2.0",
   "repository": {

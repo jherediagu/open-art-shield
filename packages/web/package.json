@@ -1,6 +1,6 @@
 {
   "name": "@openartshield/web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Browser bindings for OpenArtShield: ImageData/canvas IO for the pure core SDK, plus in-browser TrustMark verification. Your image never leaves the page.",
   "license": "Apache-2.0",
   "repository": {

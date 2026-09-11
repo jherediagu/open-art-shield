@@ -1,6 +1,6 @@
 {
   "name": "@openartshield/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pure TypeScript SDK for invisible DCT watermarking, payload encoding, and robustness audit primitives.",
   "license": "Apache-2.0",
   "repository": {

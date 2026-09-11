@@ -1,6 +1,6 @@
 {
   "name": "@openartshield/node",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Node.js image IO and real-world transformation simulations for OpenArtShield, powered by sharp.",
   "license": "Apache-2.0",
   "repository": {
